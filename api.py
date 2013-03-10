@@ -49,7 +49,7 @@ attrclasses = {
 class Output(object):
 
 	def __init__(self, package, name):
-		dirname = os.path.join("ninchat-java", "gen", "com", "ninchat", "client", "transport", package)
+		dirname = os.path.join("gen", "com", "ninchat", "client", "transport", package)
 		if not os.path.exists(dirname):
 			os.makedirs(dirname)
 
