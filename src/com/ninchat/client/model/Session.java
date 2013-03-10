@@ -659,6 +659,7 @@ public class Session {
 
 		@Override
 		public void onInvalidSession(AbstractTransport transport) {
+			if (logger.isLoggable(Level.INFO)) logger.info("onInvalidSession! Terminating session.");
 			terminate();
 
 			autoEstablish = false;

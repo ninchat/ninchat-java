@@ -238,6 +238,9 @@ public abstract class AbstractTransport {
 		if (event instanceof Error) {
 			if ("session_not_found".equals(((Error) event).getErrorType())) {
 				// Transport sent resume_session but session was not found. Probably server has invalidated it.
+
+				if (logger.isLoggable(Level.INFO)) logger.info("Server said \"session_not_found\". Terminating transport.");
+
 				terminate();
 
 				for (TransportStatusListener l : transportStatusListeners) {
