@@ -96,6 +96,8 @@ public class Session {
 		transport.addEventListener(ChannelMemberUpdated.class, new ChannelMemberUpdatedListener());
 		transport.addEventListener(ChannelMemberJoined.class, new ChannelMemberJoinedListener());
 		transport.addEventListener(ChannelMemberParted.class, new ChannelMemberPartedListener());
+		transport.addEventListener(ChannelJoined.class, new ChannelJoinedListener());
+		transport.addEventListener(ChannelParted.class, new ChannelPartedListener());
 		transport.addEventListener(Error.class, new ErrorListener());
 
 		transport.addTransportStatusListener(new SessionTransportStatusListener());
@@ -136,7 +138,7 @@ public class Session {
 		}
 	}
 
-	public User getOrCreateUser(String userId) {
+	User getOrCreateUser(String userId) {
 		synchronized (users) {
 			User user = users.get(userId);
 			if (user == null) {
@@ -150,7 +152,7 @@ public class Session {
 		}
 	}
 
-	public Dialogue getOrCreateDialogue(String userId) {
+	Dialogue getOrCreateDialogue(String userId) {
 		synchronized (dialogues) {
 			Dialogue dialogue = dialogues.get(userId);
 			if (dialogue == null) {
@@ -164,7 +166,21 @@ public class Session {
 		}
 	}
 
-	public Realm getOrCreateRealm(String realmId) {
+	Channel getOrCreateChannel(String channelId, Realm realm) {
+		synchronized (channels) {
+			Channel channel = channels.get(channelId);
+			if (channel == null) {
+				channel = new Channel(this, channelId, realm);
+				channels.put(channelId, channel);
+
+				if (logger.isLoggable(Level.FINE)) logger.fine("Created new Channel: " + channelId);
+			}
+
+			return channel;
+		}
+	}
+
+	Realm getOrCreateRealm(String realmId) {
 			synchronized (realms) {
 			Realm realm = realms.get(realmId);
 			if (realm == null) {
@@ -475,15 +491,14 @@ public class Session {
 					if (realmId != null) {
 						realm = getOrCreateRealm(realmId);
 					}
-					Channel channel = new Channel(Session.this, channelId, realm);
+
+					Channel channel = getOrCreateChannel(channelId, realm);
 
 					if (parameters.getChannelAttrs() != null) {
 						channel.importChannelAttrs(parameters.getChannelAttrs());
 					}
 
 					// TODO: channel_status
-
-					channels.put(channelId, channel);
 
 					logger.info("Created channel: " + channel.getId() + " / " + channel.getName()); // ??
 				}
@@ -590,6 +605,9 @@ public class Session {
 					member.importMemberAttrs(event.getMemberAttrs());
 					channel.updateMember(member);
 				}
+
+			} else {
+				logger.warning("ChannelMemberUpdated for unknown channel: " + event.getChannelId());
 			}
 		}
 	}
@@ -609,6 +627,9 @@ public class Session {
 					member.importMemberAttrs(event.getMemberAttrs());
 					channel.addMember(member);
 				}
+
+			} else {
+				logger.warning("ChannelMemberUpdated for unknown channel: " + event.getChannelId());
 			}
 		}
 	}
@@ -622,6 +643,51 @@ public class Session {
 				if (channel != null) {
 					channel.removeMember(event.getUserId());
 				}
+			}
+		}
+	}
+
+	private class ChannelJoinedListener implements TransportEventListener<ChannelJoined> {
+		@Override
+		public void onEvent(ChannelJoined event) {
+			if (channels.containsKey(event.getChannelId())) {
+				logger.warning("ChannelJoined but channel already exists: " + event.getChannelId());
+				return;
+			}
+
+			Realm realm = null;
+			String realmId = event.getRealmId();
+
+			if (realmId != null) {
+				if (!realms.containsKey(realmId)) {
+					describeRealm(realmId, null); // TODO: Refresh ui
+				}
+				realm = getOrCreateRealm(event.getRealmId());
+			}
+
+			Channel channel = getOrCreateChannel(event.getChannelId(), realm);
+			channel.importChannelAttrs(event.getChannelAttrs());
+
+			for (SessionListener sessionListener : sessionListeners) {
+				sessionListener.onChannelCreated(Session.this, channel);
+			}
+		}
+	}
+
+	private class ChannelPartedListener implements TransportEventListener<ChannelParted> {
+		@Override
+		public void onEvent(ChannelParted event) {
+			Channel channel = channels.get(event.getChannelId());
+
+			if (channel != null) {
+				channels.remove(event.getChannelId());
+
+				for (SessionListener sessionListener : sessionListeners) {
+					sessionListener.onChannelCreated(Session.this, channel);
+				}
+
+			} else {
+				logger.warning("ChannelParted for unknown channel: " + event.getChannelId());
 			}
 		}
 	}
