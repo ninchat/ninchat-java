@@ -261,15 +261,10 @@ public abstract class AbstractTransport {
 		Set<TransportEventListener<? extends Event>> listeners = eventListeners.get(event.getClass());
 		if (listeners != null) {
 			for (TransportEventListener listener : listeners) {
-				try {
-					eventHandled = true;
-					if (logger.isLoggable(Level.FINER)) logger.finer("Calling " + listener.getClass().getName() + " for event: " + event);
+				eventHandled = true;
+				if (logger.isLoggable(Level.FINER)) logger.finer("Calling " + listener.getClass().getName() + " for event: " + event);
 
-					listener.onEvent(event);
-
-				} catch (Exception e) {
-					logger.log(Level.WARNING, "Exception in listener, event: " + event, e);
-				}
+				listener.onEvent(event);
 			}
 		}
 
