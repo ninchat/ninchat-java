@@ -335,6 +335,11 @@ public abstract class Conversation {
 		session.getTransport().enqueue(a);
 	}
 
+	/**
+	 * Sends an action to server that removes us from the channel or dialogue.
+	 */
+	public abstract void leave();
+
 	public boolean isHistoryLoaded() {
 		return historyLoaded;
 	}

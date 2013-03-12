@@ -28,6 +28,7 @@ package com.ninchat.client.model;
 
 import com.ninchat.client.transport.AckListener;
 import com.ninchat.client.transport.actions.DescribeChannel;
+import com.ninchat.client.transport.actions.PartChannel;
 import com.ninchat.client.transport.attributes.ChannelAttrs;
 import com.ninchat.client.transport.parameters.ChannelMembers;
 
@@ -222,6 +223,13 @@ public class Channel extends Conversation {
 
 	public void setTopic(String topic) {
 		this.topic = topic;
+	}
+
+	@Override
+	public void leave() {
+		PartChannel a = new PartChannel();
+		a.setChannelId(id);
+		session.getTransport().enqueue(a);
 	}
 
 	@Override

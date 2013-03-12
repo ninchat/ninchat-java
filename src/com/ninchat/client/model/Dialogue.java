@@ -26,6 +26,8 @@
 
 package com.ninchat.client.model;
 
+import com.ninchat.client.transport.actions.DiscardHistory;
+
 import java.util.SortedSet;
 import java.util.logging.Logger;
 
@@ -55,6 +57,21 @@ public class Dialogue extends Conversation {
 
 	public User getPeer() {
 		return peer;
+	}
+
+	@Override
+	public void leave() {
+		// This is somewhat confusing....
+		DiscardHistory a = new DiscardHistory();
+		a.setUserId(peer.getUserId());
+
+		Message last = messages.last();
+		if (last == null) {
+			throw new IllegalStateException("Can not discard messages. I have no idea about any messages...");
+		}
+		a.setMessageId(last.getId());
+
+		session.getTransport().enqueue(a);
 	}
 
 	public static class WrappedId extends Conversation.WrappedId {

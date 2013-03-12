@@ -831,6 +831,24 @@ public class Session {
 		return highlightTokens;
 	}
 
+
+	/**
+	 * Removes dialogue and calls session listeners. This method is required because dialogues are stateless. User
+	 * doesn't <strong>establish</strong> a dialogue with another user - they just send a message. Use this for
+	 * closing a dialog that has no messages sent or received.
+	 *
+	 * @param id
+	 */
+	public void removeDialogue(String id) {
+		Dialogue dialogue = dialogues.remove(id);
+
+		if (dialogue == null) return; // No op
+
+		for (SessionListener sessionListener : sessionListeners) {
+			sessionListener.onDialogueDestroyed(Session.this, dialogue);
+		}
+	}
+
 	/**
 	 * Returns an immutable list that contains channels and dialogues in sorted order.
 	 * <p>
