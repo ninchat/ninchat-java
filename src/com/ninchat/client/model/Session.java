@@ -98,6 +98,7 @@ public class Session {
 		transport.addEventListener(ChannelMemberParted.class, new ChannelMemberPartedListener());
 		transport.addEventListener(ChannelJoined.class, new ChannelJoinedListener());
 		transport.addEventListener(ChannelParted.class, new ChannelPartedListener());
+		transport.addEventListener(HistoryDiscarded.class, new HistoryDiscardedListener());
 		transport.addEventListener(Error.class, new ErrorListener());
 
 		transport.addTransportStatusListener(new SessionTransportStatusListener());
@@ -415,11 +416,18 @@ public class Session {
 				target = channel;
 
 			} else if (userId != null) {
+				boolean exists = dialogues.containsKey(userId);
 				Dialogue dialogue = getOrCreateDialogue(userId);
 				target = dialogue;
 
 				if (!dialogue.getPeer().isLoaded()) {
 					describeUser(dialogue.getPeer().getUserId(), null); // TODO: Refresh gui when ready
+				}
+
+				if (!exists) {
+					for (SessionListener sessionListener : sessionListeners) {
+						sessionListener.onDialogueCreated(Session.this, dialogue);
+					}
 				}
 
 			} else {
@@ -692,6 +700,30 @@ public class Session {
 		}
 	}
 
+	private class HistoryDiscardedListener implements TransportEventListener<HistoryDiscarded> {
+		@Override
+		public void onEvent(HistoryDiscarded event) {
+			// TODO: What's the purpose of historyDiscarded.messageId ?
+
+			if (event.getUserId() != null) {
+				// Discarding dialogue
+
+				Dialogue dialogue = dialogues.remove(event.getUserId());
+
+				if (dialogue != null) {
+					for (SessionListener sessionListener : sessionListeners) {
+						sessionListener.onDialogueDestroyed(Session.this, dialogue);
+					}
+
+				} else {
+					logger.warning("HistoryDiscarded for unknown dialogue: " + event.getUserId());
+				}
+			}
+
+			// TODO: What to do with channel?
+		}
+	}
+
 	private class ErrorListener implements TransportEventListener<Error> {
 		@Override
 		public void onEvent(Error event) {
@@ -782,6 +814,17 @@ public class Session {
 
 	public Map<String, Dialogue> getDialogues() {
 		return dialogues;
+	}
+
+	public Conversation findConversation(Conversation.WrappedId wrappedId) {
+		if (wrappedId instanceof Channel.WrappedId) {
+			return channels.get(wrappedId.getId());
+
+		} else if (wrappedId instanceof Dialogue.WrappedId) {
+			return dialogues.get(wrappedId.getId());
+		}
+
+		return null;
 	}
 
 	public Set<String> getHighlightTokens() {
