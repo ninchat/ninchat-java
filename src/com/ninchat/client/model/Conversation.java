@@ -287,6 +287,26 @@ public abstract class Conversation {
 
 	public static abstract class WrappedId {
 		protected String id;
+
+		public String getId() {
+			return id;
+		}
+
+		public int hashCode() {
+			return id.hashCode();
+		}
+
+		public static WrappedId fromString(String s) {
+			if (s.startsWith("Channel/")) {
+				return new Channel.WrappedId(s.substring(s.indexOf("/") + 1));
+
+			} else if (s.startsWith("Dialogue/")) {
+				return new Dialogue.WrappedId(s.substring(s.indexOf("/") + 1));
+
+			} else {
+				throw new IllegalArgumentException("I don't understand: " + s);
+			}
+		}
 	}
 
 	/**
