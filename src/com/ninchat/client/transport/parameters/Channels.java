@@ -26,8 +26,10 @@
 
 package com.ninchat.client.transport.parameters;
 
+import java.util.HashMap;
+
 /**
  *
  */
-public class Channels {
+public class Channels extends HashMap<String, UserChannels.Parameters> {
 }

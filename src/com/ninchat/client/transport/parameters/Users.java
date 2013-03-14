@@ -26,8 +26,12 @@
 
 package com.ninchat.client.transport.parameters;
 
+import com.ninchat.client.transport.attributes.UserAttrs;
+
+import java.util.HashMap;
+
 /**
  *
  */
-public class Users {
+public class Users extends HashMap<String, UserAttrs> {
 }
