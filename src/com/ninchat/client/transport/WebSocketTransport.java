@@ -51,7 +51,7 @@ public class WebSocketTransport extends AbstractTransport {
 	private int payloadFramesLeft;
 	private Event currentEvent;
 
-	private static final long TIMEOUT_ACTION = 8 * 1000; // TODO: Configurable
+	private static final long TIMEOUT_ACTION = 20 * 1000; // TODO: Configurable
 	private static final long TIMEOUT_CHECK_LAST_EVENT = 5 * 1000; // TODO: Configurable
 	private static final long WAIT_BEFORE_PING = 90 * 1000; // TODO: Configurable
 
@@ -100,13 +100,23 @@ public class WebSocketTransport extends AbstractTransport {
 		}
 
 		queueHog = new QueueHog();
-		queueHog.start();
 	}
 
 	public void setWebSocketAdapter(WebSocketAdapter webSocketAdapter) {
 		this.webSocketAdapter = webSocketAdapter;
 		webSocketAdapter.setWebSocketTransport(this);
 
+	}
+
+	@Override
+	public Long enqueue(Action action) {
+		synchronized (queueHog) {
+			if (!queueHog.isAlive()) {
+				queueHog.start();
+			}
+		}
+
+		return super.enqueue(action);
 	}
 
 	/**
