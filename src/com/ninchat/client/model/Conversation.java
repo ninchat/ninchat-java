@@ -33,6 +33,7 @@ import com.ninchat.client.transport.actions.UpdateSession;
 import com.ninchat.client.transport.payloads.MessagePayload;
 import com.ninchat.client.transport.payloads.NinchatTextMessage;
 
+import java.io.Serializable;
 import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
@@ -285,7 +286,7 @@ public abstract class Conversation {
 		return wrappedId;
 	}
 
-	public static abstract class WrappedId {
+	public static abstract class WrappedId implements Serializable {
 		protected String id;
 
 		public String getId() {
