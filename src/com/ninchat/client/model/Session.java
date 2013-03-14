@@ -300,6 +300,8 @@ public class Session {
 	 */
 	public void endSession() {
 		if (status == Status.ESTABLISHED) {
+			autoEstablish = false;
+
 			if (transport.isConnected()) {
 				logger.fine("Sending close_session");
 
@@ -354,6 +356,8 @@ public class Session {
 		for (SessionListener sessionListener : sessionListeners) {
 			sessionListener.onSessionEnded(Session.this);
 		}
+
+		logger.info("Session terminated");
 	}
 
 	private class HistoryResultsListener implements TransportEventListener<HistoryResults> {
@@ -786,9 +790,12 @@ public class Session {
 
 		this.idle = idle;
 
-		UpdateSession a = new UpdateSession();
-		a.setSessionIdle(idle);
-		transport.enqueue(a);
+		if (isEstablished()) {
+			UpdateSession a = new UpdateSession();
+			a.setSessionIdle(idle);
+			transport.enqueue(a);
+		}
+
 	}
 
 	public String getSessionId() {
@@ -831,11 +838,57 @@ public class Session {
 		return highlightTokens;
 	}
 
+	/**
+	 * Depending on conversation type:
+	 * <ul>
+	 *   <li>Sends a join_channel request to server or ...</li>
+	 *   <li>creates a new dialogue and informs session listeners. If attributes of dialogue peer are not known,
+	 *   load them first.</li>
+	 * </ul>
+	 *
+	 * @param id
+	 */
+	public void joinConversation(final Conversation.WrappedId id) {
+		if (findConversation(id) != null) {
+			logger.warning("Trying to join an existing conversation: " + id);
+			return;
+		}
+
+		if (id instanceof Channel.WrappedId) {
+			JoinChannel a = new JoinChannel();
+			a.setChannelId(id.getId());
+			transport.enqueue(a);
+
+		} else if (id instanceof Dialogue.WrappedId) {
+
+			if (users.containsKey(id.getId())) {
+				// If users attributes are known...
+				Dialogue dialogue = getOrCreateDialogue(id.getId());
+				for (SessionListener sessionListener : sessionListeners) {
+					sessionListener.onDialogueCreated(this, dialogue);
+				}
+
+			} else {
+				// If attributes are not known, load them first
+				describeUser(id.getId(), new SimpleAckListener() {
+					@Override
+					public void onReady(boolean success) {
+						if (success) {
+							Dialogue dialogue = getOrCreateDialogue(id.getId());
+							for (SessionListener sessionListener : sessionListeners) {
+								sessionListener.onDialogueCreated(Session.this, dialogue);
+							}
+						}
+					}
+				});
+			}
+		}
+	}
 
 	/**
 	 * Removes dialogue and calls session listeners. This method is required because dialogues are stateless. User
 	 * doesn't <strong>establish</strong> a dialogue with another user - they just send a message. Use this for
-	 * closing a dialog that has no messages sent or received.
+	 * closing a dialogue which has no sent or received messages.
 	 *
 	 * @param id
 	 */
@@ -873,6 +926,13 @@ public class Session {
 		return sessionUser;
 	}
 
+	public boolean isAutoEstablish() {
+		return autoEstablish;
+	}
+
+	public void setAutoEstablish(boolean autoEstablish) {
+		this.autoEstablish = autoEstablish;
+	}
 
 	private class AttributesLoadedAckListener extends SimpleAckListener {
 		volatile int pending = 0;
