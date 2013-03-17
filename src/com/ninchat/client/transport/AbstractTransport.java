@@ -106,6 +106,8 @@ public abstract class AbstractTransport {
 		CLOSED,
 		OPENING,
 		OPENED,
+		/** Transport is being terminated because session has ended or is ending */
+		TERMINATING
 	}
 
 	/** Last sent action id */

@@ -55,8 +55,8 @@ public class WebSocketTransport extends AbstractTransport {
 	private static final long TIMEOUT_CHECK_LAST_EVENT = 5 * 1000; // TODO: Configurable
 	private static final long WAIT_BEFORE_PING = 90 * 1000; // TODO: Configurable
 
-	private QueueHog queueHog;
-	private TimeoutMonitor timeoutMonitor;
+	private volatile QueueHog queueHog;
+	private volatile TimeoutMonitor timeoutMonitor;
 
 	private final Gson gson = new Gson();
 
@@ -70,8 +70,16 @@ public class WebSocketTransport extends AbstractTransport {
 	}
 
 	public void terminate() {
+		setStatus(Status.TERMINATING);
+
 		if (queueHog != null) {
 			queueHog.interrupt();
+			try {
+				queueHog.join(10000); // Timeout just for sure. Shouldn't be needed. TODO: Remove.
+			} catch (InterruptedException e) {
+				logger.warning("Interrupted while waiting for thread to join.");
+			}
+			queueHog = null;
 		}
 
 		try {
@@ -95,11 +103,11 @@ public class WebSocketTransport extends AbstractTransport {
 		payloadFramesLeft = 0;
 		currentEvent = null;
 
-		if (queueHog != null) {
-			queueHog.interrupt();
+		if (queueHog == null) {
+			queueHog = new QueueHog();
+		} else {
+			logger.warning("init(): QueueHog is not null!");
 		}
-
-		queueHog = new QueueHog();
 	}
 
 	public void setWebSocketAdapter(WebSocketAdapter webSocketAdapter) {
@@ -382,7 +390,7 @@ public class WebSocketTransport extends AbstractTransport {
 
 						// Check whether wake up was for a ping or a new queued message
 						timeUntilPing = Math.max(lastSentActionTimestamp.get(), lastAcknowledgedActionTimestamp.get()) - System.currentTimeMillis() + WAIT_BEFORE_PING;
-						if (timeUntilPing < 0 && sessionId != null) {
+						if (timeUntilPing < 0 && status == Status.OPENED && sessionId != null) {
 							// Only ping if session is established
 							ping();
 						}
