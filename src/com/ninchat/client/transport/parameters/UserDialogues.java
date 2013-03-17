@@ -26,11 +26,21 @@
 
 package com.ninchat.client.transport.parameters;
 
+import com.google.gson.annotations.SerializedName;
+
 import java.util.HashMap;
 
 /**
  *
  */
-public class UserDialogues extends HashMap<String, Object> { // TODO: Object? What?
+public class UserDialogues extends HashMap<String, UserDialogues.Parameters> {
+	public static class Parameters {
+		@SerializedName("dialogue_status")
+		private String dialogueStatus;
+
+		public String getDialogueStatus() {
+			return dialogueStatus;
+		}
+	}
 
 }

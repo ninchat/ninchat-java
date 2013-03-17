@@ -32,6 +32,7 @@ import com.ninchat.client.transport.attributes.RealmAttrs;
 import com.ninchat.client.transport.events.*;
 import com.ninchat.client.transport.events.Error;
 import com.ninchat.client.transport.parameters.UserChannels;
+import com.ninchat.client.transport.parameters.UserDialogues;
 import com.ninchat.client.transport.payloads.MessagePayload;
 import com.ninchat.client.transport.payloads.NinchatTextMessage;
 
@@ -510,19 +511,24 @@ public class Session {
 						channel.importChannelAttrs(parameters.getChannelAttrs());
 					}
 
-					// TODO: channel_status
+					// TODO: channel_status (?)
 
 					logger.info("Created channel: " + channel.getId() + " / " + channel.getName()); // ??
 				}
 			}
 
 			if (event.getUserDialogues() != null) {
-				for (Map.Entry<String, Object> entry : event.getUserDialogues().entrySet()) {
+				for (Map.Entry<String, UserDialogues.Parameters> entry : event.getUserDialogues().entrySet()) {
 					String peerId = entry.getKey();
-//					String attribute = entry.getValue(); // TODO: Highlights
+					UserDialogues.Parameters parameters = entry.getValue();
 
 					Dialogue dialogue = getOrCreateDialogue(peerId);
 					logger.info("Created dialogue: " + dialogue.getId() + " / " + dialogue.getName()); // ??
+
+					if ("highlight".equals(parameters.getDialogueStatus())) {
+						dialogue.setActivityStatus(Conversation.ActivityStatus.UNREAD);
+						dialogue.loadHistory(null);
+					}
 				}
 			}
 
@@ -549,14 +555,26 @@ public class Session {
 		public void onEvent(ChannelFound event) {
 			String channelId = event.getChannelId();
 
+			// TODO: Should create a channel?
 			Channel channel = channels.get(channelId);
 			if (channel == null) {
 				logger.fine("channel_found for unknown channel: " + channelId);
 				return;
 			}
 
-			// TODO: channel_attrs
-			// TODO: channel_status
+			if (event.getChannelAttrs() != null) {
+				channel.importChannelAttrs(event.getChannelAttrs());
+			}
+
+			if ("highlight".equals(event.getChannelStatus())) {
+				channel.setActivityStatus(Conversation.ActivityStatus.HIGHLIGHT);
+				// Enhance UX and preload history for highlighted channels
+				channel.loadHistory(null);
+
+			} else if ("unread".equals(event.getChannelStatus())) {
+				channel.setActivityStatus(Conversation.ActivityStatus.UNREAD);
+			}
+
 			// TODO: realm_id
 
 			if (event.getChannelMembers() != null) {

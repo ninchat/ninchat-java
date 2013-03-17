@@ -77,7 +77,7 @@ public abstract class Conversation {
 		}
 	}
 
-	private ActivityStatus activityStatus = ActivityStatus.NONE;
+	ActivityStatus activityStatus = ActivityStatus.NONE;
 
 	public Conversation(Session session, String id, WrappedId wrappedId) {
 		this.id = id;
@@ -89,14 +89,20 @@ public abstract class Conversation {
 		return messages;
 	}
 
+	/**
+	 * Add a batch of messages. This should be used when message history is loaded. ActivityStatus stays intact
+	 * because it is assumed that these messages have been written in the past.
+	 *
+	 * @param messages Messages to add
+	 */
 	void addMessages(List<Message> messages) {
 		boolean hadNew = false;
 		synchronized (this.messages) {
 			hadNew = this.messages.addAll(messages);
 		}
 
-		// TODO: Don't update if there were unread messages according to channel_status
-		if (!messages.isEmpty()) {
+		if (!messages.isEmpty() && activityStatus == ActivityStatus.NONE) {
+			// Make an assumption that user has seen all
 			updateLastSeenMessageId(messages.get(messages.size() - 1).getId());
 		}
 
@@ -107,6 +113,11 @@ public abstract class Conversation {
 		}
 	}
 
+	/**
+	 * Add a single message. This should be used when a new message is received.
+	 *
+	 * @param message Message to add
+	 */
 	void addMessage(Message message) {
 		boolean wasNew;
 
@@ -136,7 +147,7 @@ public abstract class Conversation {
 	}
 
 	/**
-	 * Updates last seen message id and calls notification listeners if activity status changes.
+	 * Updates last seen message id and calls activity status listeners if activity status changes.
 	 */
 	public void updateLastSeenMessageId() {
 		Message latest;
@@ -215,7 +226,7 @@ public abstract class Conversation {
 	 *
 	 * @param activityStatus new ActivityStatus
 	 */
-	private void setActivityStatus(ActivityStatus activityStatus) {
+	void setActivityStatus(ActivityStatus activityStatus) {
 		// TODO: Mutex
 		if (activityStatus == this.activityStatus) return; // No op
 
@@ -228,7 +239,7 @@ public abstract class Conversation {
 
 		// TODO: This is fking ugly and a probable source of erroneous behavior. There's no guarantee that this method
 		// is always called after a new message has been added.
-		Message latest = messages.last();
+		Message latest = messages.isEmpty() ? null : messages.last();
 
 		for (ActivityStatusListener activityStatusListener : session.getActivityStatusListeners()) {
 			switch (activityStatus) {
