@@ -52,6 +52,36 @@ public abstract class AbstractTransport {
 	/** Timer for timeouting AckListeners */
 	protected Timer timeoutTimer;
 
+
+	public enum Status {
+		CLOSED,
+		OPENING,
+		OPENED,
+		/** Transport is being terminated because session has ended or is ending */
+		TERMINATING
+	}
+
+	/** Last sent action id */
+	protected final AtomicLong actionId = new AtomicLong();
+
+	/** Last received event id */
+	protected final AtomicLong eventId = new AtomicLong();
+
+	protected Status status = Status.CLOSED;
+	protected final Object statusHook = new Object();
+
+	protected final Map<Class<? extends Event>, Set<TransportEventListener<? extends Event>>> eventListeners =
+			new HashMap<Class<? extends Event>, Set<TransportEventListener<? extends Event>>>();
+
+	protected final Set<TransportStatusListener> transportStatusListeners = new CopyOnWriteArraySet<TransportStatusListener>();
+
+	protected String sessionId;
+
+	protected boolean autoReconnect = true;
+
+	protected String host = "api.ninchat.com";
+
+
 	protected long getQueueSize() {
 		synchronized (queue) {
 			if (lastSentAction != null) {
@@ -101,35 +131,6 @@ public abstract class AbstractTransport {
 
 		return action.isExpectActionId() ? ai : null;
 	}
-
-	public enum Status {
-		CLOSED,
-		OPENING,
-		OPENED,
-		/** Transport is being terminated because session has ended or is ending */
-		TERMINATING
-	}
-
-	/** Last sent action id */
-	protected final AtomicLong actionId = new AtomicLong();
-
-	/** Last received event id */
-	protected final AtomicLong eventId = new AtomicLong();
-
-	protected Status status = Status.CLOSED;
-	protected final Object statusHook = new Object();
-
-	protected final Map<Class<? extends Event>, Set<TransportEventListener<? extends Event>>> eventListeners =
-			new HashMap<Class<? extends Event>, Set<TransportEventListener<? extends Event>>>();
-
-	protected final Set<TransportStatusListener> transportStatusListeners = new CopyOnWriteArraySet<TransportStatusListener>();
-
-	protected String sessionId;
-
-	protected boolean autoReconnect = true;
-
-	protected String host = "api.ninchat.com";
-
 
 	public void addEventListener(Class<? extends Event> eventClass, TransportEventListener<? extends Event> eventListener) {
 		Set<TransportEventListener<? extends Event>> listeners = eventListeners.get(eventClass);
