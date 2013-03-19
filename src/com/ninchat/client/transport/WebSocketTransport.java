@@ -417,7 +417,7 @@ public class WebSocketTransport extends AbstractTransport {
 				logger.log(Level.WARNING, "Can not set thread name", e);
 			}
 
-			logger.info("QueueHog: started!");
+			logger.info("QueueHog: Thread started!");
 
 			try {
 				pickFromQueue:
@@ -560,22 +560,22 @@ public class WebSocketTransport extends AbstractTransport {
 
 					} catch (WebSocketAdapterException e) {
 						logger.log(Level.WARNING, "Problem with WebSocket. I'll quit!", e);
-						closingRequest = true;
 					}
 
 					if (closingRequest) {
-						logger.fine("QueueHog: Interrupting QueueHog and terminating transport.");
-						interrupt();
+						logger.fine("QueueHog: Terminating transport and stopping QueueHog.");
 						terminate();
+						return;
 					}
 
 				}
 
 			} catch (InterruptedException e) {
 				logger.fine("QueueHog: Thread interrupted");
-			}
 
-			logger.fine("QueueHog: Thread terminates");
+			} finally {
+				logger.fine("QueueHog: Thread terminates");
+			}
 		}
 	}
 
