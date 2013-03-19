@@ -76,8 +76,7 @@ public class Dialogue extends Conversation {
 
 	public static class WrappedId extends Conversation.WrappedId {
 		public WrappedId(String id) {
-			if (id == null) throw new IllegalArgumentException("Id can not be null!");
-			this.id = id;
+			super(id);
 		}
 
 		@Override
@@ -92,7 +91,7 @@ public class Dialogue extends Conversation {
 
 		@Override
 		public String toString() {
-			return "Dialogue/" + id;
+			return "/p/" + id;
 		}
 	}
 }

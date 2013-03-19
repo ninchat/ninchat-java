@@ -38,6 +38,8 @@ import java.util.*;
 import java.util.concurrent.CopyOnWriteArraySet;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * @author Kari Lavikka
@@ -298,7 +300,14 @@ public abstract class Conversation {
 	}
 
 	public static abstract class WrappedId implements Serializable {
-		protected String id;
+		protected final String id;
+
+		public static final Pattern pattern = Pattern.compile("^/([pc])/([a-z0-9]+)$");
+
+		protected WrappedId(String id) {
+			if (id == null) throw new IllegalArgumentException("Id can not be null!");
+			this.id = id;
+		}
 
 		public String getId() {
 			return id;
@@ -309,11 +318,15 @@ public abstract class Conversation {
 		}
 
 		public static WrappedId fromString(String s) {
-			if (s.startsWith("Channel/")) {
-				return new Channel.WrappedId(s.substring(s.indexOf("/") + 1));
+			Matcher m = pattern.matcher(s);
 
-			} else if (s.startsWith("Dialogue/")) {
-				return new Dialogue.WrappedId(s.substring(s.indexOf("/") + 1));
+			if (m.matches()) {
+				if ("c".equals(m.group(1))) {
+					return new Channel.WrappedId(m.group(2));
+				} else {
+					assert "p".equals(m.group(1));
+					return new Dialogue.WrappedId(m.group(2));
+				}
 
 			} else {
 				throw new IllegalArgumentException("I don't understand: " + s);
