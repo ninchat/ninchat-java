@@ -559,7 +559,8 @@ public class WebSocketTransport extends AbstractTransport {
 						}
 
 					} catch (WebSocketAdapterException e) {
-						logger.log(Level.WARNING, "Problem with WebSocket. I'll quit!", e);
+						logger.log(Level.WARNING, "Problem with WebSocket.", e);
+						setStatus(Status.CLOSED);
 					}
 
 					if (closingRequest) {
