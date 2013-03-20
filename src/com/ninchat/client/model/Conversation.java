@@ -187,6 +187,7 @@ public abstract class Conversation {
 
 		// Clear activity status
 
+		/*
 		SortedSet<Message> tailSet = messages.tailSet(new Message(messageId));
 		if (tailSet.size() <= 1) {
 			// Latest message have been seen
@@ -197,6 +198,9 @@ public abstract class Conversation {
 			// Anyway, we could now iterate remaining messages in tailset and check if they contain highlightable
 			// messages and set activity status accordingly.
 		}
+		*/
+
+		setActivityStatus(ActivityStatus.NONE); // Nah, assume that all messages are seen ..
 	}
 
 	public String getLastSeenMessageId() {
