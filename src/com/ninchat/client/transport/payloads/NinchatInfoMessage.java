@@ -31,6 +31,7 @@
 package com.ninchat.client.transport.payloads;
 
 import com.google.gson.annotations.SerializedName;
+import com.ninchat.client.transport.attributes.ChannelAttrs;
 
 /**
  *
@@ -47,8 +48,16 @@ public class NinchatInfoMessage extends MessagePayload {
 	@SerializedName("user_name")
 	private String userName;
 
-	// TODO: Other fields
+	@SerializedName("user_name_old")
+	private String userNameOld;
 
+	@SerializedName("channel_attrs_old")
+	private ChannelAttrs channelAttrsOld;
+
+	@SerializedName("channel_attrs_new")
+	private ChannelAttrs channelAttrsNew;
+
+	// TODO: access
 
 	@Override
 	public String getMessageType() {
@@ -57,10 +66,6 @@ public class NinchatInfoMessage extends MessagePayload {
 
 	public String getInfo() {
 		return info;
-	}
-
-	public void setInfo(String info) {
-		this.info = info;
 	}
 
 	public String getUserId() {
@@ -75,7 +80,15 @@ public class NinchatInfoMessage extends MessagePayload {
 		return userName;
 	}
 
-	public void setUserName(String userName) {
-		this.userName = userName;
+	public ChannelAttrs getChannelAttrsNew() {
+		return channelAttrsNew;
+	}
+
+	public ChannelAttrs getChannelAttrsOld() {
+		return channelAttrsOld;
+	}
+
+	public String getUserNameOld() {
+		return userNameOld;
 	}
 }

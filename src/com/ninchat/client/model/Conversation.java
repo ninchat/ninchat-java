@@ -169,6 +169,8 @@ public abstract class Conversation {
 	 * @param messageId
 	 */
 	public void updateLastSeenMessageId(String messageId) {
+		setActivityStatus(ActivityStatus.NONE); // Nah, assume that all messages are seen ..
+
 		if (lastSeenMessageId != null && messageId.compareTo(lastSeenMessageId) <= 0) return; // No op
 
 		lastSeenMessageId = messageId;
@@ -199,8 +201,6 @@ public abstract class Conversation {
 			// messages and set activity status accordingly.
 		}
 		*/
-
-		setActivityStatus(ActivityStatus.NONE); // Nah, assume that all messages are seen ..
 	}
 
 	public String getLastSeenMessageId() {
@@ -374,8 +374,8 @@ public abstract class Conversation {
 	}
 
 	private boolean containsHighlightTokens(Message message) {
-		if (message instanceof TextMessage) {
-			String text = ((TextMessage)message).getText();
+		if (message instanceof PayloadMessage) {
+			String text = ((PayloadMessage)message).getText();
 
 			Set<String> highlighTokens = session.getHighlightTokens();
 

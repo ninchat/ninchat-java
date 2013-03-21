@@ -28,42 +28,47 @@ package com.ninchat.client.model;
 
 import com.ninchat.client.transport.Payload;
 import com.ninchat.client.transport.events.MessageReceived;
+import com.ninchat.client.transport.payloads.NinchatInfoMessage;
+import com.ninchat.client.transport.payloads.NinchatLinkMessage;
 import com.ninchat.client.transport.payloads.NinchatTextMessage;
 
 /**
  * @author Kari Lavikka
  */
-public class TextMessage extends Message {
-	private final String text;
+public class PayloadMessage extends Message {
+	private final Payload payload;
 
-	TextMessage(String id, String text) {
+	PayloadMessage(String id, Payload payload) {
 		super(id);
-		this.text = text;
+		this.payload = payload;
 	}
 
-	TextMessage(MessageReceived event) {
+	PayloadMessage(MessageReceived event) {
 		super(event);
-
-		Payload payload = event.getPayloads()[0];
-		if (payload != null && payload instanceof NinchatTextMessage) {
-			this.text = ((NinchatTextMessage)payload).getText();
-		} else {
-			throw new IllegalArgumentException("Event does not contain a NinchatTextMessage payload!");
-		}
+		payload = event.getPayloads()[0];
 	}
 
 	public String getText() {
-		return text;
+		if (payload instanceof NinchatTextMessage) {
+			return ((NinchatTextMessage)payload).getText();
+
+		} else if (payload instanceof NinchatInfoMessage) {
+			return ((NinchatInfoMessage)payload).getInfo();
+
+		} else if (payload instanceof NinchatLinkMessage) {
+			return ((NinchatLinkMessage)payload).getUrl();
+
+		} else {
+			return "-";
+		}
 	}
 
-/*
-    public void setText(String text) {
-        this.text = text;
-    }
-*/
+	public Payload getPayload() {
+		return payload;
+	}
 
 	@Override
 	public String toString() {
-		return "" + time + " <" + userId + "/" + userName + "> " + text;
+		return "" + time + " <" + userId + "/" + userName + "> " + getText();
 	}
 }

@@ -33,7 +33,6 @@ import com.ninchat.client.transport.events.*;
 import com.ninchat.client.transport.events.Error;
 import com.ninchat.client.transport.parameters.UserChannels;
 import com.ninchat.client.transport.parameters.UserDialogues;
-import com.ninchat.client.transport.payloads.MessagePayload;
 import com.ninchat.client.transport.payloads.NinchatTextMessage;
 
 import java.util.*;
@@ -395,17 +394,7 @@ public class Session {
 		@Override
 		public void onEvent(MessageReceived event) {
 
-			Message message = null;
-
-			MessagePayload payload = (MessagePayload)event.getPayloads()[0]; // Assume single payload for now...
-
-			// TODO: More dynamic solution
-			if (payload instanceof NinchatTextMessage) {
-				message = new TextMessage(event);
-
-			} else {
-				logger.fine("Unsupported message type: " + payload.getClass().getName());
-			}
+			Message message = new PayloadMessage(event);
 
 			String channelId = event.getChannelId();
 			String userId = event.getUserId();

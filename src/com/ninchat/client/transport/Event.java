@@ -28,10 +28,12 @@ package com.ninchat.client.transport;
 
 import com.google.gson.annotations.SerializedName;
 
+import java.io.Serializable;
+
 /**
  * @author Kari Lavikka
  */
-public abstract class Event {
+public abstract class Event implements Serializable {
 	@SerializedName("event_id")
 	private Long id;
 
