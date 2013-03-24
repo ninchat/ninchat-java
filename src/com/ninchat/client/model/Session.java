@@ -344,7 +344,7 @@ public class Session {
 		for (Dialogue dialogue : dialogues.values()) {
 			dialogue.unregisterSessionListener();
 		}
-		channels.clear();
+		dialogues.clear();
 
 		highlightTokens.clear();
 
