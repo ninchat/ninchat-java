@@ -82,7 +82,12 @@ public abstract class AbstractTransport {
 	protected String host = "api.ninchat.com";
 
 
-	protected long getQueueSize() {
+	/**
+	 * Returns the number of unset actions
+	 *
+	 * @return
+	 */
+	public long getQueueSize() {
 		synchronized (queue) {
 			if (lastSentAction != null) {
 				// Return number of unsent messages
@@ -92,6 +97,34 @@ public abstract class AbstractTransport {
 				// Assume that all messages are unsent
 				return queue.size();
 			}
+		}
+	}
+
+
+	/**
+	 * Returns the number of unsent actions that are instances of the given class
+	 */
+	public long unsentActionsInQueue(Class<? extends Action> actionClass) {
+		synchronized (queue) {
+			SortedSet<Action> q;
+
+			if (lastSentAction != null) {
+				// Return number of unsent messages
+				q = queue.tailSet(lastSentAction);
+
+			} else {
+				// Assume that all messages are unsent
+				q = queue;
+			}
+
+			long count = 0;
+			for (Action a : q) {
+				if (actionClass.isInstance(a)) {
+					count++;
+				}
+			}
+
+			return count;
 		}
 	}
 
