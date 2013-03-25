@@ -338,13 +338,17 @@ public abstract class Conversation {
 		}
 	}
 
+	public void sendMessage(MessagePayload payload) {
+		sendMessage(payload, null);
+	}
+
 	/**
 	 * TODO: Exposing payload is probably too low level
 	 * TODO: Move to "ConversationUtils" or something
 	 *
 	 * @param payload
 	 */
-	public void sendMessage(MessagePayload payload) {
+	public void sendMessage(MessagePayload payload, AckListener ackListener) {
 		SendMessage a = new SendMessage();
 
 		// Ugly reference to lower level
@@ -360,6 +364,8 @@ public abstract class Conversation {
 
 		a.setMessageType(NinchatTextMessage.MESSAGE_TYPE);
 		a.setPayloads(new MessagePayload[]{payload});
+
+		a.setAckListener(ackListener);
 
 		session.getTransport().enqueue(a);
 	}
