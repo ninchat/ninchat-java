@@ -394,7 +394,7 @@ public class Session {
 		@Override
 		public void onEvent(MessageReceived event) {
 
-			Message message = new PayloadMessage(event);
+			Message message = new Message(event);
 
 			String channelId = event.getChannelId();
 			String userId = event.getUserId();

@@ -26,7 +26,11 @@
 
 package com.ninchat.client.model;
 
+import com.ninchat.client.transport.Payload;
 import com.ninchat.client.transport.events.MessageReceived;
+import com.ninchat.client.transport.payloads.NinchatInfoMessage;
+import com.ninchat.client.transport.payloads.NinchatLinkMessage;
+import com.ninchat.client.transport.payloads.NinchatTextMessage;
 
 import java.util.Date;
 
@@ -42,8 +46,17 @@ public class Message implements Comparable {
 	protected float ttl;
 	protected boolean fold;
 
+	private final Payload payload;
+
+	@Deprecated
+	Message(String id, Payload payload) {
+		this.id = id;
+		this.payload = payload;
+	}
+
 	Message(String id) {
 		this.id = id;
+		this.payload = null;
 	}
 
 	Message(MessageReceived event) {
@@ -51,16 +64,17 @@ public class Message implements Comparable {
 		time = new Date(event.getMessageTime() * 1000);
 		userId = event.getMessageUserId();
 		userName = event.getMessageUserName();
+
+		if (event.getPayloadCount() > 0) {
+			payload = event.getPayloads()[0];
+		} else {
+			payload = null;
+		}
 	}
 
 	public String getId() {
 		return id;
 	}
-/*
-    public void setId(String id) {
-        this.id = id;
-    }
-*/
 
 	public Date getTime() {
 		return time;
@@ -120,8 +134,42 @@ public class Message implements Comparable {
 		return obj instanceof Message && id.equals(((Message)obj).id);
 	}
 
+	public String getText() {
+		// TODO: Implement getText or something similar in all subclasses
+		if (payload instanceof NinchatTextMessage) {
+			return ((NinchatTextMessage)payload).getText();
+
+		} else if (payload instanceof NinchatInfoMessage) {
+			return ((NinchatInfoMessage)payload).getInfo();
+
+		} else if (payload instanceof NinchatLinkMessage) {
+			return ((NinchatLinkMessage)payload).getUrl();
+
+		} else {
+			return "-";
+		}
+	}
+
+	/**
+	 * Returns true if payload matches some of the given classes
+	 *
+	 * @param classes
+	 * @return
+	 */
+	public boolean payloadMatches(Class<? extends Payload>... classes) {
+		if (payload == null) return false;
+		for (Class<? extends Payload> clazz : classes) {
+			if (clazz.isInstance(payload)) return true;
+		}
+		return false;
+	}
+
+	public Payload getPayload() {
+		return payload;
+	}
+
 	@Override
 	public String toString() {
-		return "" + time + " <" + userId + "/" + userName + "> " + type;
+		return "" + time + " <" + userId + "/" + userName + "> " + getText();
 	}
 }

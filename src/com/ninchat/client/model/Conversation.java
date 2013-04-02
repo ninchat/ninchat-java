@@ -31,6 +31,7 @@ import com.ninchat.client.transport.actions.LoadHistory;
 import com.ninchat.client.transport.actions.SendMessage;
 import com.ninchat.client.transport.actions.UpdateSession;
 import com.ninchat.client.transport.payloads.MessagePayload;
+import com.ninchat.client.transport.payloads.NinchatLinkMessage;
 import com.ninchat.client.transport.payloads.NinchatTextMessage;
 
 import java.io.Serializable;
@@ -133,17 +134,19 @@ public abstract class Conversation {
 			a.onMessage(this, message);
 		}
 
-		// If message was user's own (and sent from another client)...
-		if (session.getUserId().equals(message.getUserId())) {
-			// ... mark all messages automatically as seen.
-			updateLastSeenMessageId(message.getId());
+		if (message.payloadMatches(NinchatTextMessage.class, NinchatLinkMessage.class)) {
+			// If message was user's own (and sent from another client)...
+			if (session.getUserId().equals(message.getUserId())) {
+				// ... mark all messages automatically as seen.
+				updateLastSeenMessageId(message.getId());
 
-		} else if (isNewMessages()) { // A conversationListener may have marked it read already
-			if (containsHighlightTokens(message)) {
-				setActivityStatus(ActivityStatus.HIGHLIGHT);
+			} else if (isNewMessages()) { // A conversationListener may have marked it read already
+				if (containsHighlightTokens(message)) {
+					setActivityStatus(ActivityStatus.HIGHLIGHT);
 
-			} else {
-				setActivityStatus(ActivityStatus.UNREAD);
+				} else {
+					setActivityStatus(ActivityStatus.UNREAD);
+				}
 			}
 		}
 	}
@@ -380,17 +383,15 @@ public abstract class Conversation {
 	}
 
 	private boolean containsHighlightTokens(Message message) {
-		if (message instanceof PayloadMessage) {
-			String text = ((PayloadMessage)message).getText();
+		String text = message.getText();
 
-			Set<String> highlighTokens = session.getHighlightTokens();
+		Set<String> highlighTokens = session.getHighlightTokens();
 
-			if (text != null) {
-				String[] tokens = text.split(SPLITTER);
-				for (String token : tokens) {
-					if (token.length() > 0 && highlighTokens.contains(token.toLowerCase())) { // TODO: Locale
-						return true;
-					}
+		if (text != null) {
+			String[] tokens = text.split(SPLITTER);
+			for (String token : tokens) {
+				if (token.length() > 0 && highlighTokens.contains(token.toLowerCase())) { // TODO: Locale
+					return true;
 				}
 			}
 		}
