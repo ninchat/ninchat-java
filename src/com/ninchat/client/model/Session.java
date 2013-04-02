@@ -555,13 +555,16 @@ public class Session {
 				channel.importChannelAttrs(event.getChannelAttrs());
 			}
 
-			if ("highlight".equals(event.getChannelStatus())) {
-				channel.setActivityStatus(Conversation.ActivityStatus.HIGHLIGHT);
-				// Enhance UX and preload history for highlighted channels
-				channel.loadHistory(null);
+			// If conversation has messages, it has probably been described lazily. Don't mess up activity status.
+			if (channel.getMessages().isEmpty()) {
+				if ("highlight".equals(event.getChannelStatus())) {
+					channel.setActivityStatus(Conversation.ActivityStatus.HIGHLIGHT);
+					// Enhance UX and preload history for highlighted channels
+					channel.loadHistory(null);
 
-			} else if ("unread".equals(event.getChannelStatus())) {
-				channel.setActivityStatus(Conversation.ActivityStatus.UNREAD);
+				} else if ("unread".equals(event.getChannelStatus())) {
+					channel.setActivityStatus(Conversation.ActivityStatus.UNREAD);
+				}
 			}
 
 			// TODO: realm_id
