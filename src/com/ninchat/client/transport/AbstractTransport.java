@@ -79,6 +79,8 @@ public abstract class AbstractTransport {
 
 	protected boolean autoReconnect = true;
 
+	protected boolean networkAvailability = true;
+
 	protected String host = "api.ninchat.com";
 
 
@@ -91,7 +93,7 @@ public abstract class AbstractTransport {
 		synchronized (queue) {
 			if (lastSentAction != null) {
 				// Return number of unsent messages
-				return queue.tailSet(lastSentAction).size() - 1;
+				return Math.max(queue.tailSet(lastSentAction).size() - 1, 0);
 
 			} else {
 				// Assume that all messages are unsent
@@ -248,8 +250,14 @@ public abstract class AbstractTransport {
 
 			logger.info("Connection status: " + status);
 
-			if (status == Status.CLOSED && autoReconnect && sessionId != null && getQueueSize() == 0) {
+			if (logger.isLoggable(Level.FINE)) {
+				logger.fine(String.format("Status: %1$s, autoReconnect: %2$s, sessionId: %3$s, queueSize: %4$d",
+						status.toString(), Boolean.toString(autoReconnect), sessionId, getQueueSize()));
+			}
+
+			if (status == Status.CLOSED && autoReconnect && sessionId != null && getQueueSize() <= 0) {
 				ping(); // Add something to queue to trigger reconnect attempt. TODO: This is not pretty
+				logger.fine("Added a Ping to queue. That should initiate a reconnect attempt ASAP.");
 			}
 
 			synchronized (statusHook) {
@@ -405,6 +413,17 @@ public abstract class AbstractTransport {
 	public void setHost(String host) {
 		// TODO: validate
 		this.host = host;
+	}
+
+	/**
+	 * Informs transport about network availability. Transport should close connection if network goes unavailable
+	 * and try an instant reconnect when it is available again. This is most useful on mobile devices.
+	 *
+	 * @param available
+	 */
+	public void setNetworkAvailability(boolean available) {
+		this.networkAvailability = available;
+		logger.fine("NetworkAvailability set to: " + available);
 	}
 
 	/**

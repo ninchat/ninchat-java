@@ -65,6 +65,8 @@ public class WebSocketTransport extends AbstractTransport {
 	 */
 	private final Object messageSentToWebsocketHook = new Object();
 
+	private final Object networkAvailabilityHook = new Object();
+
 	public WebSocketTransport() {
 		init();
 	}
@@ -297,6 +299,32 @@ public class WebSocketTransport extends AbstractTransport {
 
 	}
 
+	@Override
+	public void setNetworkAvailability(boolean available) {
+		super.setNetworkAvailability(available);
+
+		if (!available && isConnected()) {
+			// Because Android doesn't allow IO on main thread
+			new Thread() {
+				@Override
+				public void run() {
+					try {
+						webSocketAdapter.disconnect();
+					} catch (WebSocketAdapterException e) {
+						logger.log(Level.WARNING, "Can not disconnect", e);
+					}
+				}
+			}.start();
+		}
+
+		synchronized (networkAvailabilityHook) {
+			networkAvailabilityHook.notifyAll();
+		}
+
+		synchronized (queue) {
+			queue.notifyAll(); // Just to be sure...
+		}
+	}
 
 	private class TimeoutMonitor extends Thread {
 		@Override
@@ -447,6 +475,13 @@ public class WebSocketTransport extends AbstractTransport {
 					// Open connection if it is closed
 					while (status != Status.OPENED) {
 						if (status == Status.CLOSED) {
+							synchronized (networkAvailabilityHook) {
+								while (!networkAvailability) {
+									logger.fine("QueueHog: Network is unavailable. Waiting until it is available again.");
+									networkAvailabilityHook.wait(); // TODO: Timeout?
+								}
+							}
+							reconnectDelay = initialReconnectDelay; // TODO: Hmm not sure if this is a proper place to set this
 							logger.fine("QueueHog: calling connect()");
 							connect();
 						}
@@ -463,7 +498,12 @@ public class WebSocketTransport extends AbstractTransport {
 							// If connect failed ...
 
 							logger.fine("QueueHog: Sleeping " + reconnectDelay + "ms before trying again");
-							sleep(reconnectDelay);
+							synchronized (networkAvailabilityHook) {
+								if (!networkAvailability) {
+									networkAvailabilityHook.wait(reconnectDelay);
+								}
+							}
+
 							reconnectDelay *= 1.5;
 
 						} else if (status == Status.OPENED) {
