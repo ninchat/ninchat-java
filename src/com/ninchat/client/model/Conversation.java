@@ -63,7 +63,7 @@ public abstract class Conversation {
 
 	private String lastSeenMessageId = null;
 
-	private final String SPLITTER = "[\\s\\p{Punct}]";
+	public static final String HIGHLIGHT_TOKEN_SPLITTER = "[\\s\\p{Punct}]";
 
 	public enum ActivityStatus {
 		NONE(0),
@@ -388,7 +388,7 @@ public abstract class Conversation {
 		Set<String> highlighTokens = session.getHighlightTokens();
 
 		if (text != null) {
-			String[] tokens = text.split(SPLITTER);
+			String[] tokens = text.split(HIGHLIGHT_TOKEN_SPLITTER);
 			for (String token : tokens) {
 				if (token.length() > 0 && highlighTokens.contains(token.toLowerCase())) { // TODO: Locale
 					return true;
