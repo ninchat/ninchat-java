@@ -499,9 +499,7 @@ public class WebSocketTransport extends AbstractTransport {
 
 							logger.fine("QueueHog: Sleeping " + reconnectDelay + "ms before trying again");
 							synchronized (networkAvailabilityHook) {
-								if (!networkAvailability) {
-									networkAvailabilityHook.wait(reconnectDelay);
-								}
+								networkAvailabilityHook.wait(reconnectDelay);
 							}
 
 							reconnectDelay *= 1.5;
@@ -558,7 +556,7 @@ public class WebSocketTransport extends AbstractTransport {
 					}
 
 					try {
-						logger.finer("QueueHog: sending header to WebSocket: " + header);
+						if (logger.isLoggable(Level.FINER)) logger.finer("QueueHog: sending header to WebSocket: " + header);
 
 						webSocketAdapter.send(header);
 
@@ -573,7 +571,7 @@ public class WebSocketTransport extends AbstractTransport {
 										json = gson.toJson(payload);
 									}
 
-									logger.finer("QueueHog: sending payload to WebSocket: " + json);
+									if (logger.isLoggable(Level.FINER)) logger.finer("QueueHog: sending payload to WebSocket: " + json);
 									webSocketAdapter.send(json);
 								}
 							}
