@@ -54,6 +54,7 @@ public class Channel extends Conversation {
 	private boolean accessPrivate; // TODO: Selkeempi nimi
 	private boolean accessPublic; // TODO: Selkeempi nimi
 	private String topic;
+	private boolean suspended;
 
 
 	/** If channel has imported result of DescribeChannel */
@@ -140,6 +141,7 @@ public class Channel extends Conversation {
 		ownerId = attrs.getOwnerId();
 		accessPrivate = attrs.getPrivate();
 		accessPublic = attrs.getPublic();
+		suspended = attrs.getSuspended();
 	}
 
 	public boolean isDescribed() {
@@ -223,6 +225,10 @@ public class Channel extends Conversation {
 
 	public void setTopic(String topic) {
 		this.topic = topic;
+	}
+
+	public boolean isSuspended() {
+		return suspended;
 	}
 
 	@Override
