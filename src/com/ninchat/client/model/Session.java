@@ -83,6 +83,8 @@ public class Session {
 
 	private boolean autoEstablish = true;
 
+	private String [] acceptedMessageTypes = new String [] { "*" };
+
 	public Session(AbstractTransport transport) {
 		this.transport = transport;
 
@@ -289,7 +291,7 @@ public class Session {
 		}
 
 		CreateSession a = sessionCreationMethod.getAction();
-		a.setMessageTypes(new String [] { "*" });
+		a.setMessageTypes(acceptedMessageTypes);
 		transport.enqueue(a);
 
 		status = Status.ESTABLISHING;
@@ -806,6 +808,18 @@ public class Session {
 			transport.enqueue(a);
 		}
 
+	}
+
+	public String[] getAcceptedMessageTypes() {
+		return acceptedMessageTypes;
+	}
+
+	public void setAcceptedMessageTypes(String[] acceptedMessageTypes) {
+		if (isEstablished()) {
+			throw new IllegalStateException("Accepted message types must be set before session has been started!");
+		}
+
+		this.acceptedMessageTypes = acceptedMessageTypes;
 	}
 
 	public String getSessionId() {

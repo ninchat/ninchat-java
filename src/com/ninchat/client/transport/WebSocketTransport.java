@@ -186,11 +186,16 @@ public class WebSocketTransport extends AbstractTransport {
 				if (currentEvent instanceof MessageReceived) {
 					Class <? extends MessagePayload> payloadClass = MessagePayload.messageClasses.get(((MessageReceived)currentEvent).getMessageType());
 
-					try {
-						pe.payloads[pe.payloads.length - payloadFramesLeft] = gson.fromJson(text, payloadClass);
+					if (payloadClass != null) {
+						try {
+							pe.payloads[pe.payloads.length - payloadFramesLeft] = gson.fromJson(text, payloadClass);
 
-					} catch (JsonSyntaxException e) {
-						logger.log(Level.WARNING, "Can not parse JSON", e);
+						} catch (JsonSyntaxException e) {
+							logger.log(Level.WARNING, "Can not parse JSON", e);
+						}
+
+					} else {
+						logger.warning("Encountered an unsupported message type: " + ((MessageReceived)currentEvent).getMessageType());
 					}
 
 				} else {
