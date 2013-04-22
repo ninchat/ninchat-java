@@ -158,6 +158,9 @@ public abstract class Action implements Comparable {
 	}
 
 	public void setAckListener(AckListener ackListener, long timeout) {
+		if (!isExpectActionId()) {
+			throw new UnsupportedOperationException(getClass().getSimpleName() + " does not support AckListeners!");
+		}
 		this.ackListener = ackListener;
 		this.ackListenerTimeout = timeout;
 	}
