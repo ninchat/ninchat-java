@@ -72,6 +72,11 @@ public class WebSocketTransport extends AbstractTransport {
 	}
 
 	public void terminate() {
+		if (status == Status.CLOSED || status == Status.TERMINATING) {
+			logger.finer("terminate(): Transport status is " + status + ", no point in termination.");
+			return;
+		}
+
 		setStatus(Status.TERMINATING);
 
 		if (queueHog != null) {
@@ -79,7 +84,7 @@ public class WebSocketTransport extends AbstractTransport {
 			try {
 				queueHog.join(10000); // Timeout just for sure. Shouldn't be needed. TODO: Remove.
 			} catch (InterruptedException e) {
-				logger.warning("Interrupted while waiting for thread to join.");
+				logger.warning("terminate(): Interrupted while waiting for thread to join.");
 			}
 			queueHog = null;
 		}
@@ -120,6 +125,12 @@ public class WebSocketTransport extends AbstractTransport {
 
 	@Override
 	public Long enqueue(Action action) {
+		if (queueHog == null) {
+			// TODO: I'm not quite sure when this condition occurs and how to cope with it...
+			logger.warning("QueueHog is null. Can't enqueue.");
+			return null;
+		}
+
 		synchronized (queueHog) {
 			if (!queueHog.isAlive()) {
 				queueHog.start();

@@ -280,10 +280,13 @@ public abstract class AbstractTransport {
 		if (logger.isLoggable(Level.FINER)) logger.finer("Complete event: " + event);
 
 		if (event instanceof Error) {
-			if ("session_not_found".equals(((Error) event).getErrorType())) {
-				// Transport sent resume_session but session was not found. Probably server has invalidated it.
+			Error error = (Error)event;
+			// a) Transport sent resume_session but session was not found. Probably server has invalidated it.
+			// b) An internal error or something else occured during session init/resume/something else. It's better terminate the session and start over.
+			if ("session_not_found".equals(error.getErrorType()) ||
+					error.getActionId() == null) {
 
-				if (logger.isLoggable(Level.INFO)) logger.info("Server said \"session_not_found\". Terminating transport.");
+				if (logger.isLoggable(Level.INFO)) logger.info("Got error from server: \"" + error.getErrorType() + "\". Terminating transport.");
 
 				terminate();
 
