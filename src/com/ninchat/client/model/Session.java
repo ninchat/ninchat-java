@@ -85,6 +85,8 @@ public class Session {
 
 	private String [] acceptedMessageTypes = new String [] { "*" };
 
+	private volatile boolean attributesLoaded = false;
+
 	public Session(AbstractTransport transport) {
 		this.transport = transport;
 
@@ -120,6 +122,12 @@ public class Session {
 
 	public Status getStatus() {
 		return status;
+	}
+
+	private void setStatus(Status status) {
+		logger.info("Session status: " + status);
+
+		this.status = status;
 	}
 
 	public boolean isEstablished() {
@@ -294,7 +302,7 @@ public class Session {
 		a.setMessageTypes(acceptedMessageTypes);
 		transport.enqueue(a);
 
-		status = Status.ESTABLISHING;
+		setStatus(Status.ESTABLISHING);
 	}
 
 	/**
@@ -350,7 +358,7 @@ public class Session {
 
 		highlightTokens.clear();
 
-		status = Status.VIRGIN;
+		setStatus(Status.VIRGIN);
 
 		transport.setSessionId(null);
 		transport.terminate();
@@ -358,6 +366,8 @@ public class Session {
 		for (SessionListener sessionListener : sessionListeners) {
 			sessionListener.onSessionEnded(Session.this);
 		}
+
+		attributesLoaded = false;
 
 		logger.info("Session terminated");
 	}
@@ -527,7 +537,7 @@ public class Session {
 			// TODO: user_account
 			// TODO: user_settings
 
-			status = Status.ESTABLISHED;
+			setStatus(Status.ESTABLISHED);
 
 			transport.setSessionId(sessionId); // For resume_session
 
@@ -788,7 +798,7 @@ public class Session {
 		public void onClose(AbstractTransport transport) {
 			if (status == Status.ESTABLISHING) {
 				// Server closed connection during log in process. I'm still virgin!
-				status = Status.VIRGIN;
+				setStatus(Status.VIRGIN);
 			}
 		}
 	}
@@ -958,6 +968,10 @@ public class Session {
 		this.autoEstablish = autoEstablish;
 	}
 
+	public boolean isAttributesLoaded() {
+		return attributesLoaded;
+	}
+
 	private class AttributesLoadedAckListener extends SimpleAckListener {
 		volatile int pending = 0;
 
@@ -965,6 +979,8 @@ public class Session {
 		public void onReady(boolean success) {
 			pending--;
 			if (pending == 0) {
+				attributesLoaded = true;
+
 				for (SessionListener sessionListener : sessionListeners) {
 					sessionListener.onAttributesLoaded(Session.this);
 				}
