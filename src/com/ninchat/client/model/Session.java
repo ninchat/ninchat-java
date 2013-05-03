@@ -52,7 +52,7 @@ public class Session {
 		ESTABLISHED,
 	}
 
-	private Status status = Status.VIRGIN;
+	private volatile Status status = Status.VIRGIN;
 
 	private final AbstractTransport transport;
 
