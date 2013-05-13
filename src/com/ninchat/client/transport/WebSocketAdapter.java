@@ -27,11 +27,13 @@
 package com.ninchat.client.transport;
 
 import java.net.URI;
+import java.util.Map;
 
 /**
  * @author Kari Lavikka
  */
 public abstract class WebSocketAdapter {
+	protected Map<String, String> extraHeaders;
 	protected URI uri;
 	private WebSocketTransport webSocketTransport;
 
@@ -41,6 +43,14 @@ public abstract class WebSocketAdapter {
 
 	public void setURI(URI uri) {
 		this.uri = uri;
+	}
+
+	public Map<String, String> getExtraHeaders() {
+		return extraHeaders;
+	}
+
+	public void setExtraHeaders(Map<String, String> extraHeaders) {
+		this.extraHeaders = extraHeaders;
 	}
 
 	public abstract void connect() throws WebSocketAdapterException;
