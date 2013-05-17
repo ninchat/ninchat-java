@@ -65,12 +65,17 @@ public class WebSocketTransport extends AbstractTransport {
 	 */
 	private final Object messageSentToWebsocketHook = new Object();
 
+
+	/**
+	 * This object is notified when network is available again. Triggers reconnect attempt.
+	 */
 	private final Object networkAvailabilityHook = new Object();
 
 	public WebSocketTransport() {
 		init();
 	}
 
+	@Override
 	public void terminate() {
 		if (status == Status.CLOSED || status == Status.TERMINATING) {
 			logger.finer("terminate(): Transport status is " + status + ", no point in termination.");
@@ -125,15 +130,17 @@ public class WebSocketTransport extends AbstractTransport {
 
 	@Override
 	public Long enqueue(Action action) {
-		if (queueHog == null) {
+		QueueHog q = queueHog;
+
+		if (q == null) {
 			// TODO: I'm not quite sure when this condition occurs and how to cope with it...
 			logger.warning("QueueHog is null. Can't enqueue.");
 			return null;
 		}
 
-		synchronized (queueHog) {
-			if (!queueHog.isAlive()) {
-				queueHog.start();
+		synchronized (q) {
+			if (!q.isAlive()) {
+				q.start();
 			}
 		}
 
@@ -259,6 +266,16 @@ public class WebSocketTransport extends AbstractTransport {
 				currentEvent = gson.fromJson(text, eventClass);
 				if (currentEvent instanceof PayloadEvent) {
 					((PayloadEvent)currentEvent).payloads = new Payload[payloadFramesLeft];
+				}
+
+				if (!(currentEvent instanceof com.ninchat.client.transport.events.Error)) {
+					// Reset reconnect delay only when a normal event (non-error) is received
+					// TODO: Should do this only for the initial event of each transport connection
+
+					QueueHog q = queueHog;
+					if (q != null) {
+						q.resetReconnectDelay();
+					}
 				}
 
 				// We really should not get into these exception handlers. There's a risk that we mess up payload
@@ -447,10 +464,10 @@ public class WebSocketTransport extends AbstractTransport {
 
 			logger.info("TimeoutMonitor: Thread terminates");
 		}
-	};
+	}
 
 	private class QueueHog extends Thread {
-		final long initialReconnectDelay = 1000;
+		final long initialReconnectDelay = 3000;
 		long reconnectDelay = initialReconnectDelay;
 
 		@Override
@@ -539,8 +556,6 @@ public class WebSocketTransport extends AbstractTransport {
 
 									// If resume_session fails, we get an error event with error type "session_not_found"
 
-									reconnectDelay = initialReconnectDelay; // TODO: This should probably be set after successful session negotiation
-
 									rewindQueue();
 
 									continue pickFromQueue;
@@ -552,8 +567,6 @@ public class WebSocketTransport extends AbstractTransport {
 
 							} else {
 								logger.fine("QueueHog: Got a connection");
-
-								reconnectDelay = initialReconnectDelay; // TODO: This should probably be set after successful session negotiation
 							}
 						}
 					}
@@ -631,6 +644,11 @@ public class WebSocketTransport extends AbstractTransport {
 			} finally {
 				logger.fine("QueueHog: Thread terminates");
 			}
+
+		}
+
+		public void resetReconnectDelay() {
+			reconnectDelay = initialReconnectDelay;
 		}
 	}
 
