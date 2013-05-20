@@ -420,7 +420,7 @@ public class WebSocketTransport extends AbstractTransport {
 
 						logger.finer("TimeoutMonitor: Found an unacknowledged action #" + action.getId() + " from queue.");
 
-						long currentTime = System.currentTimeMillis();
+						long currentTime = elapsedTime();
 
 						long timeLeft = action.getSent() + TIMEOUT_ACTION - currentTime;
 						if (timeLeft < 0) {
@@ -469,7 +469,7 @@ public class WebSocketTransport extends AbstractTransport {
 
 						// TODO: Ping logic probably needs some polishment. Doesn't look that nice...
 
-						long timeUntilPing = Math.max(lastSentActionTimestamp.get(), lastAcknowledgedActionTimestamp.get()) - System.currentTimeMillis() + WAIT_BEFORE_PING;
+						long timeUntilPing = Math.max(lastSentActionTimestamp.get(), lastAcknowledgedActionTimestamp.get()) - elapsedTime() + WAIT_BEFORE_PING;
 
 						timeUntilPing = Math.max(timeUntilPing, 5000); // Wait at least 5 sec. Kluns...
 
@@ -479,7 +479,7 @@ public class WebSocketTransport extends AbstractTransport {
 						}
 
 						// Check whether wake up was for a ping or a new queued message
-						timeUntilPing = Math.max(lastSentActionTimestamp.get(), lastAcknowledgedActionTimestamp.get()) - System.currentTimeMillis() + WAIT_BEFORE_PING;
+						timeUntilPing = Math.max(lastSentActionTimestamp.get(), lastAcknowledgedActionTimestamp.get()) - elapsedTime() + WAIT_BEFORE_PING;
 						if (timeUntilPing < 0 && status == Status.OPENED && sessionId != null) {
 							// Only ping if session is established
 							ping();
@@ -635,7 +635,7 @@ public class WebSocketTransport extends AbstractTransport {
 							}
 						}
 
-						lastSentActionTimestamp.set(System.currentTimeMillis());
+						lastSentActionTimestamp.set(elapsedTime());
 
 						if (action.isExpectActionId()) {
 							action.flagSent();

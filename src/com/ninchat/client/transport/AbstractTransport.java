@@ -370,7 +370,7 @@ public abstract class AbstractTransport {
 		assert action.getId() != null;
 		assert action.getId().equals(event.getActionId());
 
-		lastAcknowledgedActionTimestamp.set(System.currentTimeMillis());
+		lastAcknowledgedActionTimestamp.set(elapsedTime());
 		logger.finer("Removed acknowledged action #" + actionId + " from queue");
 
 		// TODO: Only on last response (if there are multiple with same event id)
@@ -392,7 +392,7 @@ public abstract class AbstractTransport {
 	 * Rewinds queue for new connection. Unacknowledged actions will be sent again when session is resumed.
 	 */
 	protected void rewindQueue() {
-		long now = System.currentTimeMillis();
+		long now = elapsedTime();
 
 		lastAcknowledgedActionTimestamp.set(now);
 		lastSentActionTimestamp.set(now);
@@ -449,5 +449,28 @@ public abstract class AbstractTransport {
 		@Override public boolean isExpectActionId() { return true; }
 		@Override public boolean verify() { return true; }
 		@Override public String getActionName() { return null; }
+	}
+
+	/**
+	 * Defines a time provider (milliseconds since unspecified moment in past). This is mainly for Android's
+	 * SystemClock.elapsedRealtime()
+	 */
+	public interface RealtimeProvider {
+		public long elapsed();
+	}
+
+	private RealtimeProvider realtimeProvider = new RealtimeProvider() {
+		@Override
+		public long elapsed() {
+			return System.currentTimeMillis();
+		}
+	};
+
+	public void setRealtimeProvider(RealtimeProvider realtimeProvider) {
+		this.realtimeProvider = realtimeProvider;
+	}
+
+	protected long elapsedTime() {
+		return realtimeProvider.elapsed();
 	}
 }
