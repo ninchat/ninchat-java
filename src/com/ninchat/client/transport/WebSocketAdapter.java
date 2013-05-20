@@ -53,7 +53,11 @@ public abstract class WebSocketAdapter {
 		this.extraHeaders = extraHeaders;
 	}
 
-	public abstract void connect() throws WebSocketAdapterException;
+	public void connect() throws WebSocketAdapterException {
+		connect(0);
+	}
+
+	public abstract void connect(int timeout) throws WebSocketAdapterException;
 	public abstract void send(Object message) throws WebSocketAdapterException;
 	public abstract void disconnect() throws WebSocketAdapterException;
 

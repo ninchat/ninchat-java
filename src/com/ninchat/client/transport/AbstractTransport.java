@@ -82,6 +82,7 @@ public abstract class AbstractTransport {
 	protected boolean networkAvailability = true;
 
 	protected String host = "api.ninchat.com";
+	protected String sessionHost;
 
 
 	/**
@@ -416,6 +417,14 @@ public abstract class AbstractTransport {
 	public void setHost(String host) {
 		// TODO: validate
 		this.host = host;
+	}
+
+	public String getSessionHost() {
+		return sessionHost;
+	}
+
+	public void setSessionHost(String sessionHost) {
+		this.sessionHost = sessionHost;
 	}
 
 	/**

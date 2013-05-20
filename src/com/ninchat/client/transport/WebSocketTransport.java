@@ -53,12 +53,20 @@ public class WebSocketTransport extends AbstractTransport {
 
 	private static final long TIMEOUT_ACTION = 20 * 1000; // TODO: Configurable
 	private static final long TIMEOUT_CHECK_LAST_EVENT = 5 * 1000; // TODO: Configurable
-	private static final long WAIT_BEFORE_PING = 90 * 1000; // TODO: Configurable
+	private static final long WAIT_BEFORE_PING = 120 * 1000; // TODO: Configurable
+
+	/** Timeout when connecting to primary host */
+	private static final int TIMEOUT_CONNECT = 0;
+
+	/** Timeout when connnecting to specific session host */
+	private static final int TIMEOUT_CONNECT_SESSION_HOST = 15 * 1000;
 
 	private volatile QueueHog queueHog;
 	private volatile TimeoutMonitor timeoutMonitor;
 
 	private final Gson gson = new Gson();
+
+	private String currentHost;
 
 	/**
 	 * TimeoutWatcher waits in this object
@@ -158,18 +166,26 @@ public class WebSocketTransport extends AbstractTransport {
 			return false;
 		}
 
+		if (host == null) {
+			throw new IllegalStateException("No host has been set!");
+		}
+
 		try {
 			setStatus(Status.OPENING);
 
-			URI uri = new URI("wss://" + host + "/socket");
+			currentHost = sessionHost != null ? sessionHost : host;
+			int timeout = sessionHost != null ? TIMEOUT_CONNECT_SESSION_HOST : TIMEOUT_CONNECT;
+
+			URI uri = new URI("wss://" + currentHost + "/socket");
 			logger.info("Connecting to " + uri);
 			webSocketAdapter.setURI(uri);
-			webSocketAdapter.connect();
+			webSocketAdapter.connect(timeout);
 
 			return true;
 
 		} catch (Exception e) {
 			logger.log(Level.WARNING, "Can not connect", e);
+			sessionHost = null; // Don't try session host again. It may be dead.
 			setStatus(Status.CLOSED);
 		}
 
@@ -230,6 +246,19 @@ public class WebSocketTransport extends AbstractTransport {
 
 			if (text == null || text.length() == 0 || text.charAt(0) != '{') {
 				logger.finest("Empty frame!");
+
+				// This is probably a keepalive frame that mitigates load balancer's tendency to disconnect idling connections too eagerly.
+				// Let's disconnect if we are currently connected to the primary host and a specific session host is available
+				if (currentHost.equals(host) && sessionHost != null && !sessionHost.equals(host)) {
+					// But let's behave nicely and not disconnect if autoReconnect is not enabled.
+					if (autoReconnect) {
+						try {
+							webSocketAdapter.disconnect();
+						} catch (WebSocketAdapterException e) {
+							// Not interested...
+						}
+					}
+				}
 				return;
 			}
 

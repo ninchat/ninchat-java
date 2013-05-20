@@ -476,7 +476,7 @@ public class Session {
 		@Override
 		public void onEvent(SessionCreated event) {
 
-			transport.setHost(event.getSessionHost());
+			transport.setSessionHost(event.getSessionHost());
 
 			sessionId = event.getSessionId();
 			userId = event.getUserId();
