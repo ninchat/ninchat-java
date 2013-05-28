@@ -792,9 +792,11 @@ public class Session {
 
 			autoEstablish = false;
 			// If start session is successful, autoEstablish will be set to true
-			// It will remain false if an error occures
+			// It will remain false if an error occurs
 			if (sessionCreationMethod instanceof UserIdSessionCreationMethod) {
 				startSession();
+			} else {
+				logger.warning("Can't restart session. No UserIdSessionCreationMethod has been set!");
 			}
 		}
 
