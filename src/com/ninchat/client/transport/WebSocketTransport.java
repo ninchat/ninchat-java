@@ -85,7 +85,7 @@ public class WebSocketTransport extends AbstractTransport {
 
 	@Override
 	public void terminate() {
-		if (status == Status.CLOSED || status == Status.TERMINATING) {
+		if (status == Status.TERMINATING) {
 			logger.finer("terminate(): Transport status is " + status + ", no point in termination.");
 			return;
 		}
@@ -187,6 +187,19 @@ public class WebSocketTransport extends AbstractTransport {
 			logger.log(Level.WARNING, "Can not connect", e);
 			sessionHost = null; // Don't try session host again. It may be dead.
 			setStatus(Status.CLOSED);
+
+			Throwable t = e;
+			while (true) {
+				Throwable cause = t.getCause();
+				if (cause == null) {
+					for (TransportStatusListener l : transportStatusListeners) {
+						l.onConnectionError(this, t);
+					}
+					break;
+				}
+				t = cause;
+			}
+
 		}
 
 		return false;
@@ -558,6 +571,12 @@ public class WebSocketTransport extends AbstractTransport {
 						if (status == Status.CLOSED) {
 							logger.fine("QueueHog: Connection attempt failed");
 							// If connect failed ...
+
+							if (!autoReconnect) {
+								logger.fine("QueueHog: Autoreconnect is disabled. Bailing out.");
+								terminate();
+								return;
+							}
 
 							logger.fine("QueueHog: Sleeping " + reconnectDelay + "ms before trying again");
 							synchronized (networkAvailabilityHook) {

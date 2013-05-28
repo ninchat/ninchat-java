@@ -81,7 +81,7 @@ public abstract class AbstractTransport {
 
 	protected boolean networkAvailability = true;
 
-	protected String host = "api.ninchat.com";
+	protected String host;
 	protected String sessionHost;
 
 
@@ -425,6 +425,14 @@ public abstract class AbstractTransport {
 
 	public void setSessionHost(String sessionHost) {
 		this.sessionHost = sessionHost;
+	}
+
+	public boolean isAutoReconnect() {
+		return autoReconnect;
+	}
+
+	public void setAutoReconnect(boolean autoReconnect) {
+		this.autoReconnect = autoReconnect;
 	}
 
 	/**

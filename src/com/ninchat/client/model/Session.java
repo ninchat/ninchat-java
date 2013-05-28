@@ -309,6 +309,10 @@ public class Session {
 	 * Initiates graceful session shutdown.
 	 */
 	public void endSession() {
+		if (status == Status.VIRGIN) {
+			throw new IllegalStateException("Can't end VIRGIN session!");
+		}
+
 		if (status == Status.ESTABLISHED) {
 			autoEstablish = false;
 
@@ -323,12 +327,10 @@ public class Session {
 				Thread.sleep(200);
 			} catch (InterruptedException e) {  }
 
-			// .. And ensure that it really ends
-			terminate();
-
-		} else {
-			logger.warning("Session is not established. Can not end session!");
 		}
+
+		// .. And ensure that it really ends
+		terminate();
 	}
 
 	/**
@@ -338,10 +340,9 @@ public class Session {
 		if (status == Status.VIRGIN) {
 			logger.info("terminateSession(): Session is still virgin. No point in termination");
 			return;
-
-		} else if (status == Status.ESTABLISHING) {
-			throw new IllegalStateException("Oh no! What to do! Trying to terminate an ESTABLISHING session. Fixing this would be a good idea.");
 		}
+
+		Status statusWas = status;
 
 		realms.clear();
 		users.clear();
@@ -363,10 +364,13 @@ public class Session {
 		transport.setSessionId(null);
 		transport.terminate();
 
-		for (SessionListener sessionListener : sessionListeners) {
-			sessionListener.onSessionEnded(Session.this);
+		if (statusWas == Status.ESTABLISHED) {
+			for (SessionListener sessionListener : sessionListeners) {
+				sessionListener.onSessionEnded(Session.this);
+			}
 		}
 
+		sessionCreationMethod = null;
 		attributesLoaded = false;
 
 		logger.info("Session terminated");
@@ -798,8 +802,16 @@ public class Session {
 		public void onClose(AbstractTransport transport) {
 			if (status == Status.ESTABLISHING) {
 				// Server closed connection during log in process. I'm still virgin!
-				setStatus(Status.VIRGIN);
+				if (!transport.isAutoReconnect()) {
+					// If not gonna try again
+					setStatus(Status.VIRGIN);
+				}
 			}
+		}
+
+		@Override
+		public void onConnectionError(AbstractTransport transport, Throwable rootCause) {
+			//To change body of implemented methods use File | Settings | File Templates.
 		}
 	}
 

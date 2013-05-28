@@ -33,6 +33,7 @@ public interface TransportStatusListener {
 	public void onOpen(AbstractTransport transport);
 	public void onOpening(AbstractTransport transport);
 	public void onClose(AbstractTransport transport);
+	public void onConnectionError(AbstractTransport transport, Throwable rootCause);
 
 	/**
 	 * Called if session resume failed after reconnect. This happens when server has invalidated the session.
