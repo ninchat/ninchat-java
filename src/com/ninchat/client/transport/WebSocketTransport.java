@@ -55,14 +55,18 @@ public class WebSocketTransport extends AbstractTransport {
 	private static final long TIMEOUT_CHECK_LAST_EVENT = 5 * 1000; // TODO: Configurable
 	private static final long WAIT_BEFORE_PING = 120 * 1000; // TODO: Configurable
 
+	private static final long WAIT_BEFORE_EVENT_ACK = 5000;
+	private static final long MAX_WAIT_BEFORE_EVENT_ACK = 30000;
+
 	/** Timeout when connecting to primary host */
-	private static final int TIMEOUT_CONNECT = 0;
+	private static final int TIMEOUT_CONNECT = 30 * 1000;
 
 	/** Timeout when connnecting to specific session host */
 	private static final int TIMEOUT_CONNECT_SESSION_HOST = 15 * 1000;
 
 	private volatile QueueHog queueHog;
 	private volatile TimeoutMonitor timeoutMonitor;
+	private volatile EventAcknowledger eventAcknowledger;
 
 	private final Gson gson = new Gson();
 
@@ -102,6 +106,16 @@ public class WebSocketTransport extends AbstractTransport {
 			queueHog = null;
 		}
 
+		if (eventAcknowledger != null) {
+			eventAcknowledger.interrupt();
+			try {
+				eventAcknowledger.join(10000); // Timeout just for sure. Shouldn't be needed. TODO: Remove.
+			} catch (InterruptedException e) {
+				logger.warning("terminate(): Interrupted while waiting for thread to join.");
+			}
+			eventAcknowledger = null;
+		}
+
 		try {
 			// TODO: Better approach would be to signal QueueHog about termination. It's just not properly implemented.
 			// There's already a graceful shutdown handling for "close_session" and it actually calls this terminate method.
@@ -127,6 +141,13 @@ public class WebSocketTransport extends AbstractTransport {
 			queueHog = new QueueHog();
 		} else {
 			logger.warning("init(): QueueHog is not null!");
+		}
+
+		if (eventAcknowledger == null) {
+			eventAcknowledger = new EventAcknowledger();
+			eventAcknowledger.start();
+		} else {
+			logger.warning("init(): EventAcknowledger is not null!");
 		}
 	}
 
@@ -306,6 +327,7 @@ public class WebSocketTransport extends AbstractTransport {
 				}
 
 				currentEvent = gson.fromJson(text, eventClass);
+				currentEvent.setReceived(elapsedTime());
 				if (currentEvent instanceof PayloadEvent) {
 					((PayloadEvent)currentEvent).payloads = new Payload[payloadFramesLeft];
 				}
@@ -348,6 +370,12 @@ public class WebSocketTransport extends AbstractTransport {
 
 	}
 
+	@Override
+	protected void onCompleteEvent(Event event) {
+		super.onCompleteEvent(event);
+
+		eventAcknowledger.wakeup();
+	}
 
 	private void timeout() {
 		logger.info("Timeout! Closing connection...");
@@ -480,22 +508,8 @@ public class WebSocketTransport extends AbstractTransport {
 					} else {
 						// There are no unacknowledged actions
 
-						// TODO: Ping logic probably needs some polishment. Doesn't look that nice...
-
-						long timeUntilPing = Math.max(lastSentActionTimestamp.get(), lastAcknowledgedActionTimestamp.get()) - elapsedTime() + WAIT_BEFORE_PING;
-
-						timeUntilPing = Math.max(timeUntilPing, 5000); // Wait at least 5 sec. Kluns...
-
-						logger.finest("TimeoutMonitor: Queue is empty. Waiting " + timeUntilPing + "ms, until a message has been sent to WebSocket or it is time to PING.");
 						synchronized (messageSentToWebsocketHook) {
-							messageSentToWebsocketHook.wait(timeUntilPing);
-						}
-
-						// Check whether wake up was for a ping or a new queued message
-						timeUntilPing = Math.max(lastSentActionTimestamp.get(), lastAcknowledgedActionTimestamp.get()) - elapsedTime() + WAIT_BEFORE_PING;
-						if (timeUntilPing < 0 && status == Status.OPENED && sessionId != null) {
-							// Only ping if session is established
-							ping();
+							messageSentToWebsocketHook.wait();
 						}
 					}
 				}
@@ -506,6 +520,81 @@ public class WebSocketTransport extends AbstractTransport {
 
 			logger.info("TimeoutMonitor: Thread terminates");
 		}
+	}
+
+	private class EventAcknowledger extends Thread {
+
+		private long ackAt = Long.MIN_VALUE;
+		private long ackAtTheLatest = Long.MIN_VALUE;
+
+		public synchronized void wakeup() {
+			Event e = lastReceivedEvent;
+
+			if (ackAt == Long.MIN_VALUE) {
+				ackAtTheLatest = e.getReceived() + MAX_WAIT_BEFORE_EVENT_ACK;
+			}
+
+			ackAt = e.getReceived() + WAIT_BEFORE_EVENT_ACK;
+
+			this.notify();
+		}
+
+		@Override
+		public void run() {
+
+			try {
+				setName("EventAcknowledger");
+			} catch (SecurityException e) {
+				logger.log(Level.WARNING, "Can not set thread name", e);
+			}
+
+			logger.info("EventAcknowledger: Thread started!");
+
+			try {
+				while (!isInterrupted()) {
+					if (shouldAcknowledgeEventId()) {
+						long waitBefore;
+
+						synchronized (this) {
+							long e = elapsedTime();
+							if (e > ackAtTheLatest) {
+								waitBefore = 0;
+							} else {
+								waitBefore = ackAt - e;
+							}
+						}
+
+						if (logger.isLoggable(Level.FINER)) logger.finer("EventAcknowledger: WaitBefore = " + waitBefore);
+
+						if (waitBefore <= 0) {
+							enqueue(new ResumeSession());
+
+							ackAt = Long.MIN_VALUE;
+							ackAtTheLatest = Long.MIN_VALUE;
+
+						} else {
+							if (logger.isLoggable(Level.FINER)) logger.finer("EventAcknowledger: Waiting " + waitBefore + "ms");
+							synchronized (this) {
+								this.wait(waitBefore);
+							}
+						}
+
+					} else {
+						logger.finer("EventAcknowledger: Waiting indefinitely");
+						synchronized (this) {
+							this.wait();
+						}
+					}
+				}
+
+			} catch (InterruptedException e) {
+				logger.fine("EventAcknowledger: Thread interrupted");
+
+			} finally {
+				logger.fine("EventAcknowledger: Thread terminates");
+			}
+		}
+
 	}
 
 	private class QueueHog extends Thread {
@@ -586,14 +675,14 @@ public class WebSocketTransport extends AbstractTransport {
 							reconnectDelay *= 1.5;
 
 						} else if (status == Status.OPENED) {
-							if (sessionId != null) {
+							if (sessionId != null && lastReceivedEvent != null) {
 								logger.fine("QueueHog: Resuming session");
 								// If connection was opened and session is is present
 
 								try {
 									Action r = new ResumeSession();
 									r.setSessionId(sessionId);
-									r.setEventId(eventId.get());
+									r.setEventId(lastReceivedEvent.getId());
 									JsonElement element = gson.toJsonTree(r);
 									element.getAsJsonObject().addProperty("action", r.getActionName());
 

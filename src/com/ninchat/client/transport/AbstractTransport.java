@@ -64,8 +64,9 @@ public abstract class AbstractTransport {
 	/** Last sent action id */
 	protected final AtomicLong actionId = new AtomicLong();
 
-	/** Last received event id */
-	protected final AtomicLong eventId = new AtomicLong();
+	protected volatile Event lastReceivedEvent;
+	protected volatile Event lastAcknowledgedEvent;
+
 
 	protected Status status = Status.CLOSED;
 	protected final Object statusHook = new Object();
@@ -149,9 +150,11 @@ public abstract class AbstractTransport {
 		Long ai = actionId.getAndIncrement();
 		action.setId(ai);
 
-		Long lEventId = eventId.get();
-		if (lEventId > Long.MIN_VALUE) {
-			action.setEventId(lEventId); // TODO: Behave well and do not send same id multiple times
+		if (shouldAcknowledgeEventId()) {
+			if (lastReceivedEvent != null && lastReceivedEvent.getId() != null) {
+				action.setEventId(lastReceivedEvent.getId());
+				lastAcknowledgedEvent = lastReceivedEvent;
+			}
 		}
 
 		action.registerTimeoutTask(timeoutTimer);
@@ -215,6 +218,9 @@ public abstract class AbstractTransport {
 		synchronized (queue) {
 			queue.clear();
 		}
+
+		lastReceivedEvent = null;
+		lastAcknowledgedEvent = null;
 
 		init();
 	}
@@ -299,9 +305,7 @@ public abstract class AbstractTransport {
 
 		Long ei = event.getId();
 		if (ei != null) {
-			assert ei >= eventId.get();
-
-			eventId.set(ei);
+			lastReceivedEvent = event;
 		}
 
 		boolean eventHandled = false;
@@ -444,6 +448,22 @@ public abstract class AbstractTransport {
 	public void setNetworkAvailability(boolean available) {
 		this.networkAvailability = available;
 		logger.fine("NetworkAvailability set to: " + available);
+	}
+
+	protected boolean shouldAcknowledgeEventId() {
+		if (lastReceivedEvent == null) {
+			return false;
+		}
+
+		if (lastReceivedEvent != null && lastAcknowledgedEvent == null) {
+			return true;
+		}
+
+		return lastReceivedEvent.getId() > lastAcknowledgedEvent.getId();
+	}
+
+	public Event getLastReceivedEvent() {
+		return lastReceivedEvent;
 	}
 
 	/**

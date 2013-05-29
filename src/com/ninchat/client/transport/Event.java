@@ -40,7 +40,7 @@ public abstract class Event implements Serializable {
 	@SerializedName("action_id")
 	private Long actionId;
 
-	private transient final long received = System.currentTimeMillis();
+	private transient long received = Long.MIN_VALUE;
 
 	/**
 	 * TODO: Rename to validate()
@@ -65,6 +65,14 @@ public abstract class Event implements Serializable {
 	 */
 	public long getReceived() {
 		return received;
+	}
+
+	void setReceived(long received) {
+		if (received == Long.MIN_VALUE) {
+			throw new IllegalStateException("Can't reset received stamp!");
+		}
+
+		this.received = received;
 	}
 
 	@Override
