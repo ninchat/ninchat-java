@@ -530,6 +530,8 @@ public class WebSocketTransport extends AbstractTransport {
 		public synchronized void wakeup() {
 			Event e = lastReceivedEvent;
 
+			if (e == null) return;
+
 			if (ackAt == Long.MIN_VALUE) {
 				ackAtTheLatest = e.getReceived() + MAX_WAIT_BEFORE_EVENT_ACK;
 			}
