@@ -26,8 +26,10 @@
 
 package com.ninchat.client.transport.parameters;
 
+import java.util.HashMap;
+
 /**
  *
  */
-public class UserIdentities {
+public class UserIdentities extends HashMap<String, HashMap<String, Object>> {
 }
