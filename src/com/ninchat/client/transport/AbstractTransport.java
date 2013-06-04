@@ -76,6 +76,7 @@ public abstract class AbstractTransport {
 
 	protected final Set<TransportStatusListener> transportStatusListeners = new CopyOnWriteArraySet<TransportStatusListener>();
 
+	/** Session id is used for resume_session. This must be set after session has been established */
 	protected String sessionId;
 
 	protected boolean autoReconnect = true;
@@ -451,6 +452,10 @@ public abstract class AbstractTransport {
 	}
 
 	protected boolean shouldAcknowledgeEventId() {
+		if (sessionId == null) {
+			return false;
+		}
+
 		if (lastReceivedEvent == null) {
 			return false;
 		}
