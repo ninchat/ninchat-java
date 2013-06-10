@@ -288,6 +288,11 @@ public abstract class Conversation {
 		historyLoaded = true;
 	}
 
+	/**
+	 * Returns an ambiguous "raw" id. Channel and dialogue ids may overlap.
+	 *
+	 * @return id
+	 */
 	public String getId() {
 		return id;
 	}
@@ -302,6 +307,11 @@ public abstract class Conversation {
 
 	void unregisterSessionListener() { }
 
+	/**
+	 * Returns an unambiguous wrapped id which makes a distinction between channel and dialogue
+	 *
+	 * @return WrappedId
+	 */
 	public WrappedId getWrappedId() {
 		return wrappedId;
 	}

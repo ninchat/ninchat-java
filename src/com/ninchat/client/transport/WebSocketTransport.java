@@ -286,6 +286,7 @@ public class WebSocketTransport extends AbstractTransport {
 				if (currentHost.equals(host) && sessionHost != null && !sessionHost.equals(host)) {
 					// But let's behave nicely and not disconnect if autoReconnect is not enabled.
 					if (autoReconnect) {
+						logger.info("Received an empty keepalive frame. I'll disconnect from " + currentHost + " and connect to a specific session host: " + sessionHost);
 						try {
 							webSocketAdapter.disconnect();
 						} catch (WebSocketAdapterException e) {
