@@ -788,13 +788,21 @@ public class Session {
 		@Override
 		public void onInvalidSession(AbstractTransport transport) {
 			if (logger.isLoggable(Level.INFO)) logger.info("onInvalidSession! Terminating session.");
-			terminate();
+
+			SessionCreationMethod method = sessionCreationMethod;
+
+			terminate(); // clears session creation method
 
 			autoEstablish = false;
 			// If start session is successful, autoEstablish will be set to true
 			// It will remain false if an error occurs
-			if (sessionCreationMethod instanceof UserIdSessionCreationMethod) {
+			if (method instanceof UserIdSessionCreationMethod) {
+				sessionCreationMethod = method;
+
+				// TODO: Handle invalid session creation method...
+
 				startSession();
+
 			} else {
 				logger.warning("Can't restart session. No UserIdSessionCreationMethod has been set!");
 			}
