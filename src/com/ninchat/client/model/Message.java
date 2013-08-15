@@ -46,15 +46,14 @@ public class Message implements Comparable {
 	protected float ttl;
 	protected boolean fold;
 
-	private final Payload payload;
+	protected final Payload payload;
 
-	@Deprecated
-	Message(String id, Payload payload) {
+	protected Message(String id, Payload payload) {
 		this.id = id;
 		this.payload = payload;
 	}
 
-	Message(String id) {
+	protected Message(String id) {
 		this.id = id;
 		this.payload = null;
 	}

@@ -49,7 +49,7 @@ public class Channel extends Conversation {
 	protected final Collection<ChannelListener> channelListeners = new CopyOnWriteArraySet<ChannelListener>();
 
 	private Realm realm;
-	private String name;
+	protected String name;
 	private String ownerId;
 	private boolean accessPrivate; // TODO: Selkeempi nimi
 	private boolean accessPublic; // TODO: Selkeempi nimi
@@ -73,11 +73,13 @@ public class Channel extends Conversation {
 		}
 	};
 
-	Channel(Session session, String id, Realm realm) {
+	public Channel(Session session, String id, Realm realm) {
 		super(session, id, new WrappedId(id));
 		this.realm = realm;
 
-		session.addSessionListener(sessionListener); // TODO: removal when channel is removed
+		if (session != null) {
+			session.addSessionListener(sessionListener); // TODO: removal when channel is removed
+		}
 	}
 
 	void unregisterSessionListener() {
@@ -236,16 +238,6 @@ public class Channel extends Conversation {
 		PartChannel a = new PartChannel();
 		a.setChannelId(id);
 		session.getTransport().enqueue(a);
-	}
-
-	@Override
-	public int hashCode() {
-		return super.hashCode();    //To change body of overridden methods use File | Settings | File Templates.
-	}
-
-	@Override
-	public boolean equals(Object obj) {
-		return super.equals(obj);    //To change body of overridden methods use File | Settings | File Templates.
 	}
 
 	public static class WrappedId extends Conversation.WrappedId {

@@ -413,4 +413,20 @@ public abstract class Conversation {
 	public String toString() {
 		return this.getClass().getSimpleName() + "/" + id + "/" + getName();
 	}
+
+	@Override
+	public int hashCode() {
+		return wrappedId != null ? wrappedId.hashCode() : 0;
+
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (obj instanceof Conversation) {
+			Conversation.WrappedId i =  ((Conversation)obj).wrappedId;
+			return i != null && i.equals(getWrappedId());
+		}
+		return false;
+	}
+
 }

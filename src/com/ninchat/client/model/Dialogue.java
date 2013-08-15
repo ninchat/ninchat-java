@@ -42,7 +42,9 @@ public class Dialogue extends Conversation {
 	public Dialogue(Session session, String id) {
 		super(session, id, new WrappedId(id));
 
-		peer = session.getOrCreateUser(id);
+		if (session != null) {
+			peer = session.getOrCreateUser(id);
+		}
 	}
 
 	public SortedSet<Message> getMessages() {
@@ -73,6 +75,7 @@ public class Dialogue extends Conversation {
 
 		session.getTransport().enqueue(a);
 	}
+
 
 	public static class WrappedId extends Conversation.WrappedId {
 		public WrappedId(String id) {
