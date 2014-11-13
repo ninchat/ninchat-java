@@ -300,7 +300,9 @@ public class WebSocketTransport extends AbstractTransport {
 			try {
 				String eventName = null;
 
-				assert payloadFramesLeft == 0;
+				if (payloadFramesLeft != 0) {
+					throw new RuntimeException("Mismatch in payload frame counter!");
+				}
 
 				// First we have to view received object briefly to figure out a concrete event type and the number of expected payload frames
 				JsonReader reader = new JsonReader(new StringReader(text));
@@ -346,13 +348,15 @@ public class WebSocketTransport extends AbstractTransport {
 				// We really should not get into these exception handlers. There's a risk that we mess up payload
 				// counters and transport state gets corrupted. TODO: Session should probably get terminated now...
 
-			} catch (JsonSyntaxException e) {
-				logger.log(Level.SEVERE, "Error while parsing websocket message: " + message, e);
-
-			} catch (IOException e) {
-				logger.log(Level.SEVERE, "Error while parsing websocket message: " + message, e);
+			} catch (Exception e) {
+				//logger.log(Level.SEVERE, "Error while parsing websocket message: " + message, e);
+				throw new RuntimeException("Error while parsing websocket message: " + message, e);
 			}
+		}
 
+		// Debugging. This should never happen
+		if (currentEvent == null) {
+			throw new RuntimeException("currentEvent is null. Should not be!");
 		}
 
 		if (payloadFramesLeft <= 0) {
