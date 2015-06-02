@@ -42,6 +42,8 @@ import java.util.logging.Logger;
 public abstract class AbstractTransport {
 	private final static Logger logger = Logger.getLogger(AbstractTransport.class.getName());
 
+	private final static long INITIAL_ACTION_ID = 1;
+
 	protected final NavigableSet<Action> queue = new TreeSet<Action>();
 
 	protected final AtomicLong lastAcknowledgedActionTimestamp = new AtomicLong(Long.MIN_VALUE);
@@ -62,7 +64,7 @@ public abstract class AbstractTransport {
 	}
 
 	/** Last sent action id */
-	protected final AtomicLong actionId = new AtomicLong();
+	protected final AtomicLong actionId = new AtomicLong(INITIAL_ACTION_ID);
 
 	protected volatile Event lastReceivedEvent;
 	protected volatile Event lastAcknowledgedEvent;
@@ -222,6 +224,8 @@ public abstract class AbstractTransport {
 
 		lastReceivedEvent = null;
 		lastAcknowledgedEvent = null;
+
+		actionId.set(INITIAL_ACTION_ID);
 
 		init();
 	}
