@@ -145,7 +145,7 @@ public abstract class AbstractTransport {
 	 */
 	public Long enqueue(Action action) {
 		if (!action.verify()) {
-			throw new IllegalArgumentException("Action validation failed! Probably some mandatory properties are missing.");
+			throw new IllegalArgumentException("Action validation failed! Probably some mandatory properties are missing: " + action.getActionName());
 		}
 
 		Long ai = actionId.getAndIncrement();

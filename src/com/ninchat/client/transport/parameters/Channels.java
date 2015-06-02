@@ -26,10 +26,36 @@
 
 package com.ninchat.client.transport.parameters;
 
+import com.google.gson.annotations.SerializedName;
+import com.ninchat.client.transport.attributes.ChannelAttrs;
+
 import java.util.HashMap;
 
 /**
  *
  */
-public class Channels extends HashMap<String, UserChannels.Parameters> {
+public class Channels extends HashMap<String, Channels.Parameters> {
+
+	public static class Parameters {
+		@SerializedName("channel_attrs")
+		private ChannelAttrs channelAttrs;
+
+		@SerializedName("realm_id")
+		private String realmId;
+
+		@SerializedName("weight")
+		private double weight;
+
+		public ChannelAttrs getChannelAttrs() {
+			return channelAttrs;
+		}
+
+		public String getRealmId() {
+			return realmId;
+		}
+
+		public double getWeight() {
+			return weight;
+		}
+	}
 }

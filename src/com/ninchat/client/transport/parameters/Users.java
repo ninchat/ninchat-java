@@ -26,6 +26,7 @@
 
 package com.ninchat.client.transport.parameters;
 
+import com.google.gson.annotations.SerializedName;
 import com.ninchat.client.transport.attributes.UserAttrs;
 
 import java.util.HashMap;
@@ -33,5 +34,21 @@ import java.util.HashMap;
 /**
  *
  */
-public class Users extends HashMap<String, UserAttrs> {
+public class Users extends HashMap<String, Users.Parameters> {
+
+	public static class Parameters {
+		@SerializedName("user_attrs")
+		private UserAttrs userAttrs;
+
+		@SerializedName("weight")
+		private double weight;
+
+		public UserAttrs getUserAttrs() {
+			return userAttrs;
+		}
+
+		public double getWeight() {
+			return weight;
+		}
+	}
 }

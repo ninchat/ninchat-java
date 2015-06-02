@@ -197,7 +197,7 @@ public class WebSocketTransport extends AbstractTransport {
 			currentHost = sessionHost != null ? sessionHost : host;
 			int timeout = sessionHost != null ? TIMEOUT_CONNECT_SESSION_HOST : TIMEOUT_CONNECT;
 
-			URI uri = new URI("wss://" + currentHost + "/socket");
+			URI uri = new URI("wss://" + currentHost + "/v2/socket");
 			logger.info("Connecting to " + uri);
 			webSocketAdapter.setURI(uri);
 			webSocketAdapter.connect(timeout);

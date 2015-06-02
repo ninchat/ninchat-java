@@ -60,7 +60,7 @@ public class Message implements Comparable {
 
 	Message(MessageReceived event) {
 		this.id = event.getMessageId();
-		time = new Date(event.getMessageTime() * 1000);
+		time = new Date((long)(event.getMessageTime() * 1000));
 		userId = event.getMessageUserId();
 		userName = event.getMessageUserName();
 
@@ -139,7 +139,7 @@ public class Message implements Comparable {
 			return ((NinchatTextMessage)payload).getText();
 
 		} else if (payload instanceof NinchatInfoMessage) {
-			return ((NinchatInfoMessage)payload).getInfo();
+			return "";
 
 		} else if (payload instanceof NinchatLinkMessage) {
 			return ((NinchatLinkMessage)payload).getUrl();

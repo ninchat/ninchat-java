@@ -40,9 +40,15 @@ public abstract class MessagePayload extends Payload {
 	public static final Map<String, Class<? extends MessagePayload>> messageClasses;
 	static {
 		Map<String, Class<? extends MessagePayload>> e = new HashMap<String, Class<? extends MessagePayload>>();
-		e.put(NinchatInfoMessage.MESSAGE_TYPE, NinchatInfoMessage.class);
 		e.put(NinchatLinkMessage.MESSAGE_TYPE, NinchatLinkMessage.class);
 		e.put(NinchatTextMessage.MESSAGE_TYPE, NinchatTextMessage.class);
+
+		e.put(NinchatInfoAccessMessage.MESSAGE_TYPE,  NinchatInfoAccessMessage.class);
+		e.put(NinchatInfoChannelMessage.MESSAGE_TYPE, NinchatInfoChannelMessage.class);
+		e.put(NinchatInfoJoinMessage.MESSAGE_TYPE,    NinchatInfoJoinMessage.class);
+		e.put(NinchatInfoMemberMessage.MESSAGE_TYPE,  NinchatInfoMemberMessage.class);
+		e.put(NinchatInfoPartMessage.MESSAGE_TYPE,    NinchatInfoPartMessage.class);
+		e.put(NinchatInfoUserMessage.MESSAGE_TYPE,    NinchatInfoUserMessage.class);
 
 		messageClasses = e; // TODO: A clean mutation model should be provided
 	}
