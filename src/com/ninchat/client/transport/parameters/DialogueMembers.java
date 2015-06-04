@@ -26,8 +26,22 @@
 
 package com.ninchat.client.transport.parameters;
 
+import com.google.gson.annotations.SerializedName;
+
+import java.util.HashMap;
+
 /**
  *
  */
-public class DialogueMembers {
+public class DialogueMembers extends HashMap<String, DialogueMembers.Parameters> {
+
+	public static class Parameters {
+		@SerializedName("queue_id")
+		private String queueId;
+
+		public String getQueueId() {
+			return queueId;
+		}
+	}
+
 }

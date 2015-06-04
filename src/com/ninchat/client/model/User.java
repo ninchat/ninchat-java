@@ -35,7 +35,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- * @autor Kari Lavikka
+ * @author Kari Lavikka
  */
 public class User {
 	private final static Logger logger = Logger.getLogger(User.class.getName());
@@ -52,6 +52,11 @@ public class User {
 	private String realName;
 	private boolean guest;
 	private Long idle;
+
+	/**
+	 * Pseudo attribute for a deleted user that does not exist on the server any more
+	 */
+	private boolean deleted;
 
 	private boolean imported = false;
 
@@ -80,7 +85,9 @@ public class User {
 
 		// TODO: info
 
-		name = attrs.getName();
+		if (attrs.getName() != null) {
+			name = attrs.getName();
+		}
 		realName = attrs.getRealname();
 
 		if (attrs.getIconurl() != null) {
@@ -168,6 +175,14 @@ public class User {
 
 	public void setIdle(Long idle) {
 		this.idle = idle;
+	}
+
+	public boolean isDeleted() {
+		return deleted;
+	}
+
+	void setDeleted(boolean deleted) {
+		this.deleted = deleted;
 	}
 
 	public Presence getPresence() {

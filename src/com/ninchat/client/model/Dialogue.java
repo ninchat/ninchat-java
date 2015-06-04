@@ -27,6 +27,8 @@
 package com.ninchat.client.model;
 
 import com.ninchat.client.transport.actions.DiscardHistory;
+import com.ninchat.client.transport.actions.UpdateDialogue;
+import com.ninchat.client.transport.events.DialogueUpdated;
 
 import java.util.SortedSet;
 import java.util.logging.Logger;
@@ -38,6 +40,9 @@ public class Dialogue extends Conversation {
 	private final static Logger logger = Logger.getLogger(Dialogue.class.getName());
 
 	private User peer;
+
+	/** An optional audience queue which initiated this dialogue */
+	private AudienceQueue audienceQueue;
 
 	public Dialogue(Session session, String id) {
 		super(session, id, new WrappedId(id));
@@ -54,26 +59,36 @@ public class Dialogue extends Conversation {
 	public String getName() {
 		String peerName = peer != null ? peer.getName() : null;
 
-		return peerName != null ? peerName : id;
+		if (peerName == null) {
+			peerName = id;
+		}
+
+		if (audienceQueue != null) {
+			peerName = peerName + " (" + audienceQueue.getName() + ")";
+		}
+
+		return peerName;
 	}
 
 	public User getPeer() {
 		return peer;
 	}
 
+	public AudienceQueue getAudienceQueue() {
+		return audienceQueue;
+	}
+
+	void setAudienceQueue(AudienceQueue audienceQueue) {
+		this.audienceQueue = audienceQueue;
+	}
+
 	@Override
 	public void leave() {
-		// This is somewhat confusing....
-		DiscardHistory a = new DiscardHistory();
-		a.setUserId(peer.getUserId());
+		UpdateDialogue updateDialogue = new UpdateDialogue();
+		updateDialogue.setUserId(getId());
+		updateDialogue.setDialogueStatus("hidden");
 
-		Message last = messages.last();
-		if (last == null) {
-			throw new IllegalStateException("Can not discard messages. I have no idea about any messages...");
-		}
-		a.setMessageId(last.getId());
-
-		session.getTransport().enqueue(a);
+		session.getTransport().enqueue(updateDialogue);
 	}
 
 

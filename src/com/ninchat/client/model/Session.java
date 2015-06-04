@@ -31,8 +31,7 @@ import com.ninchat.client.transport.actions.*;
 import com.ninchat.client.transport.attributes.RealmAttrs;
 import com.ninchat.client.transport.events.*;
 import com.ninchat.client.transport.events.Error;
-import com.ninchat.client.transport.parameters.UserChannels;
-import com.ninchat.client.transport.parameters.UserDialogues;
+import com.ninchat.client.transport.parameters.*;
 import com.ninchat.client.transport.payloads.NinchatTextMessage;
 
 import java.util.*;
@@ -72,6 +71,8 @@ public class Session {
 	private final Map<String, Realm> realms = new HashMap<String, Realm>();
 	private final Set<Realm> userRealms = new HashSet<Realm>();
 
+	private final Map<String, AudienceQueue> audienceQueues = new HashMap<String, AudienceQueue>();
+
 	private final Map<String, User> users = new HashMap<String, User>();
 
 	private final Set<SessionListener> sessionListeners = new CopyOnWriteArraySet<SessionListener>(); // Synchronization not required
@@ -97,12 +98,18 @@ public class Session {
 		transport.addEventListener(RealmFound.class, new RealmFoundListener());
 		transport.addEventListener(UserFound.class, new UserFoundListener());
 		transport.addEventListener(UserUpdated.class, new UserUpdatedListener());
+		transport.addEventListener(UserDeleted.class, new UserDeletedListener());
 		transport.addEventListener(ChannelMemberUpdated.class, new ChannelMemberUpdatedListener());
 		transport.addEventListener(ChannelMemberJoined.class, new ChannelMemberJoinedListener());
 		transport.addEventListener(ChannelMemberParted.class, new ChannelMemberPartedListener());
 		transport.addEventListener(ChannelJoined.class, new ChannelJoinedListener());
 		transport.addEventListener(ChannelParted.class, new ChannelPartedListener());
 		transport.addEventListener(HistoryDiscarded.class, new HistoryDiscardedListener());
+		transport.addEventListener(QueueUpdated.class, new QueueUpdatedListener());
+		transport.addEventListener(QueueParted.class, new QueuePartedListener());
+		transport.addEventListener(QueueJoined.class, new QueueJoinedListener());
+		transport.addEventListener(DialogueUpdated.class, new DialogueUpdatedListener());
+
 		transport.addEventListener(Error.class, new ErrorListener());
 
 		transport.addTransportStatusListener(new SessionTransportStatusListener());
@@ -192,7 +199,7 @@ public class Session {
 	}
 
 	Realm getOrCreateRealm(String realmId) {
-			synchronized (realms) {
+		synchronized (realms) {
 			Realm realm = realms.get(realmId);
 			if (realm == null) {
 				realm = new Realm(realmId);
@@ -202,6 +209,20 @@ public class Session {
 			}
 
 			return realm;
+		}
+	}
+
+	AudienceQueue getOrCreateAudienceQueue(String queueId) {
+		synchronized (realms) {
+			AudienceQueue audienceQueue = audienceQueues.get(queueId);
+			if (audienceQueue == null) {
+				audienceQueue = new AudienceQueue(queueId);
+				audienceQueues.put(queueId, audienceQueue);
+
+				if (logger.isLoggable(Level.FINE)) logger.fine("Created new AudienceQueue: " + queueId);
+			}
+
+			return audienceQueue;
 		}
 	}
 
@@ -262,6 +283,13 @@ public class Session {
 
 	public void describeRealm(String realmId, AckListener ackListener) {
 		DescribeRealm a = new DescribeRealm();
+		a.setRealmId(realmId);
+		a.setAckListener(ackListener);
+		transport.enqueue(a);
+	}
+
+	public void describeRealmQueues(String realmId, AckListener ackListener) {
+		DescribeRealmQueues a = new DescribeRealmQueues();
 		a.setRealmId(realmId);
 		a.setAckListener(ackListener);
 		transport.enqueue(a);
@@ -527,13 +555,40 @@ public class Session {
 					String peerId = entry.getKey();
 					UserDialogues.Parameters parameters = entry.getValue();
 
+					if ("hidden".equals(parameters.getDialogueStatus())) {
+						// Don't track hidden dialogues
+						continue;
+					}
+
 					Dialogue dialogue = getOrCreateDialogue(peerId);
 					logger.info("Created dialogue: " + dialogue.getId() + " / " + dialogue.getName()); // ??
+
+					if (parameters.getDialogueMembers() != null) {
+						DialogueMembers.Parameters memberParams = parameters.getDialogueMembers().get(entry.getKey());
+						if (memberParams != null) {
+							if (memberParams.getQueueId() != null) {
+								dialogue.setAudienceQueue(getOrCreateAudienceQueue(memberParams.getQueueId()));
+							}
+						}
+					}
 
 					if ("highlight".equals(parameters.getDialogueStatus())) {
 						dialogue.setActivityStatus(Conversation.ActivityStatus.UNREAD);
 						dialogue.loadHistory(null);
 					}
+				}
+			}
+
+			if (event.getUserQueues() != null) {
+				for (Map.Entry<String, UserQueues.Parameters> e : event.getUserQueues().entrySet()) {
+					AudienceQueue audienceQueue = getOrCreateAudienceQueue(e.getKey());
+					audienceQueue.setName(e.getValue().getQueueAttrs().getName());
+					audienceQueue.setLength(e.getValue().getQueueAttrs().getLength());
+					if (e.getValue().getRealmId() != null) {
+						audienceQueue.setRealm(getOrCreateRealm(e.getValue().getRealmId()));
+					}
+
+					logger.info("Created AudienceQueue: " + audienceQueue.getId() + " / " + audienceQueue.getName());
 				}
 			}
 
@@ -629,6 +684,25 @@ public class Session {
 
 			// TODO: user_settings
 			// TODO: user_account
+		}
+	}
+
+	private class UserDeletedListener implements TransportEventListener<UserDeleted> {
+		@Override
+		public void onEvent(UserDeleted event) {
+			User user;
+			synchronized (users) {
+				user = users.get(event.getUserId());
+			}
+
+			if (user != null) {
+				user.setDeleted(true);
+
+				for (SessionListener sessionListener : sessionListeners) {
+					sessionListener.onUserUpdated(Session.this, user);
+				}
+			}
+
 		}
 	}
 
@@ -751,6 +825,90 @@ public class Session {
 			}
 
 			// TODO: What to do with channel?
+		}
+	}
+
+	private class QueueUpdatedListener implements TransportEventListener<QueueUpdated> {
+		@Override
+		public void onEvent(QueueUpdated event) {
+			AudienceQueue audienceQueue = getOrCreateAudienceQueue(event.getQueueId());
+			audienceQueue.importAttrs(event.getQueueAttrs());
+
+			for (SessionListener sessionListener : sessionListeners) {
+				sessionListener.onAudienceQueueUpdated(Session.this, audienceQueue);
+			}
+		}
+	}
+
+	private class DialogueUpdatedListener implements TransportEventListener<DialogueUpdated> {
+		@Override
+		public void onEvent(DialogueUpdated event) {
+
+			String s = event.getDialogueStatus();
+			if (s == null) {
+				// Don't know how to handle
+				return;
+			}
+
+			if (s.equals("hidden")) {
+				// Don't track follow hidden dialogues in client
+				removeDialogue(event.getUserId());
+
+			} else {
+				// Register new dialogue
+				boolean exists = dialogues.containsKey(event.getUserId());
+				Dialogue dialogue = getOrCreateDialogue(event.getUserId());
+
+				DialogueMembers.Parameters parameters = event.getDialogueMembers().get(event.getUserId());
+				if (parameters != null) {
+					if (parameters.getQueueId() != null) {
+						dialogue.setAudienceQueue(getOrCreateAudienceQueue(parameters.getQueueId()));
+					}
+				}
+
+				if (!dialogue.getPeer().isLoaded()) {
+					logger.fine("Unknown dialogue peer. Let's describe!");
+					describeUser(dialogue.getPeer().userId, null);
+					// Humm.. should we wait until the peer has been described..?
+				}
+
+				if (!exists) {
+					for (SessionListener sessionListener : sessionListeners) {
+						sessionListener.onDialogueCreated(Session.this, dialogue);
+					}
+				}
+			}
+		}
+	}
+
+	private class QueueJoinedListener implements TransportEventListener<QueueJoined> {
+		@Override
+		public void onEvent(QueueJoined event) {
+			AudienceQueue audienceQueue = getOrCreateAudienceQueue(event.getQueueId());
+			audienceQueue.importAttrs(event.getQueueAttrs());
+
+			if (event.getRealmId() != null) {
+				audienceQueue.setRealm(getOrCreateRealm(event.getRealmId()));
+			}
+
+			for (SessionListener sessionListener : sessionListeners) {
+				sessionListener.onAudienceQueueCreated(Session.this, audienceQueue);
+			}
+		}
+	}
+
+	private class QueuePartedListener implements TransportEventListener<QueueParted> {
+		@Override
+		public void onEvent(QueueParted event) {
+			AudienceQueue audienceQueue = audienceQueues.remove(event.getQueueId());
+
+			if (audienceQueue != null) {
+				for (SessionListener sessionListener : sessionListeners) {
+					sessionListener.onAudienceQueueDestroyed(Session.this, audienceQueue);
+				}
+			}
+
+			// TODO: Iterate dialogues and remove those initiated by the audience queue
 		}
 	}
 
@@ -974,6 +1132,10 @@ public class Session {
 		return Collections.unmodifiableList(conversations);
 	}
 
+	public Map<String, AudienceQueue> getAudienceQueues() {
+		return Collections.unmodifiableMap(audienceQueues);
+	}
+
 	public Map<String, Realm> getRealms() {
 		return realms;
 	}
@@ -1027,6 +1189,8 @@ public class Session {
 				somethingToLoad = true;
 				ack.addPending();
 				describeRealm(realm.getId(), ack);
+				ack.addPending();
+				describeRealmQueues(realm.getId(), ack);
 			}
 		}
 

@@ -38,8 +38,22 @@ public class UserDialogues extends HashMap<String, UserDialogues.Parameters> {
 		@SerializedName("dialogue_status")
 		private String dialogueStatus;
 
+		@SerializedName("audience_metadata")
+		private AudienceMetadata audienceMetadata = null;
+
+		@SerializedName("dialogue_members")
+		private DialogueMembers dialogueMembers = null;
+
 		public String getDialogueStatus() {
 			return dialogueStatus;
+		}
+
+		public AudienceMetadata getAudienceMetadata() {
+			return audienceMetadata;
+		}
+
+		public DialogueMembers getDialogueMembers() {
+			return dialogueMembers;
 		}
 	}
 

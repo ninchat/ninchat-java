@@ -7,21 +7,42 @@ import java.util.HashMap;
 /**
  * @author Kari
  */
-public class QueueAttrs extends HashMap<String, QueueAttrs.Parameters> {
+public class QueueAttrs {
+	@SerializedName("name")
+	private String name;
 
-	public static class Parameters {
-		@SerializedName("queue_attrs")
-		private QueueAttrs queueAttrs;
+	@SerializedName("length")
+	private Integer length;
 
-		@SerializedName("realm_id")
-		private String realmId;
+	@SerializedName("schedule")
+	private Object schedule;
 
-		public QueueAttrs getQueueAttrs() {
-			return queueAttrs;
-		}
+	@SerializedName("closed")
+	private boolean closed;
 
-		public String getRealmId() {
-			return realmId;
-		}
+	@SerializedName("suspended")
+	private boolean suspended;
+
+	// TODO: Schedule
+
+
+	public void setName(String name) {
+		this.name = name;
+	}
+
+	public void setClosed(boolean closed) {
+		this.closed = closed;
+	}
+
+	public String getName() {
+		return name;
+	}
+
+	public Integer getLength() {
+		return length;
+	}
+
+	public boolean isClosed() {
+		return closed || suspended;
 	}
 }

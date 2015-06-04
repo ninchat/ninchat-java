@@ -42,6 +42,10 @@ public abstract class SessionListener {
 	public void onSessionEstablished(Session session) { }
 	public void onSessionEnded(Session session) { } // TODO: Reason
 
+	public void onAudienceQueueCreated(Session session, AudienceQueue audienceQueue) { }
+	public void onAudienceQueueDestroyed(Session session, AudienceQueue audienceQueue) { }
+	public void onAudienceQueueUpdated(Session session, AudienceQueue audienceQueue) { }
+
 	/**
 	 * After session has been established, some attributes like realms and dialogue peers have to be loaded before
 	 * they can be shown in user interface. Session does this automatically after it has been established. This
