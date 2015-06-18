@@ -98,7 +98,7 @@ public class Session {
 		transport.addEventListener(RealmFound.class, new RealmFoundListener());
 		transport.addEventListener(UserFound.class, new UserFoundListener());
 		transport.addEventListener(UserUpdated.class, new UserUpdatedListener());
-		transport.addEventListener(UserDeleted.class, new UserDeletedListener());
+		// transport.addEventListener(UserDeleted.class, new UserDeletedListener());
 		transport.addEventListener(ChannelMemberUpdated.class, new ChannelMemberUpdatedListener());
 		transport.addEventListener(ChannelMemberJoined.class, new ChannelMemberJoinedListener());
 		transport.addEventListener(ChannelMemberParted.class, new ChannelMemberPartedListener());
@@ -687,25 +687,6 @@ public class Session {
 		}
 	}
 
-	private class UserDeletedListener implements TransportEventListener<UserDeleted> {
-		@Override
-		public void onEvent(UserDeleted event) {
-			User user;
-			synchronized (users) {
-				user = users.get(event.getUserId());
-			}
-
-			if (user != null) {
-				user.setDeleted(true);
-
-				for (SessionListener sessionListener : sessionListeners) {
-					sessionListener.onUserUpdated(Session.this, user);
-				}
-			}
-
-		}
-	}
-
 	private class ChannelMemberUpdatedListener implements TransportEventListener<ChannelMemberUpdated> {
 		@Override
 		public void onEvent(ChannelMemberUpdated event) {
@@ -832,10 +813,21 @@ public class Session {
 		@Override
 		public void onEvent(QueueUpdated event) {
 			AudienceQueue audienceQueue = getOrCreateAudienceQueue(event.getQueueId());
+
+			int oldLength = audienceQueue.getLength();
+
 			audienceQueue.importAttrs(event.getQueueAttrs());
+
+			int difference = audienceQueue.getLength() - oldLength;
 
 			for (SessionListener sessionListener : sessionListeners) {
 				sessionListener.onAudienceQueueUpdated(Session.this, audienceQueue);
+			}
+
+			if (difference != 0) {
+				for (SessionListener sessionListener : sessionListeners) {
+					sessionListener.onAudienceQueueLengthChanged(Session.this, audienceQueue, difference);
+				}
 			}
 		}
 	}
@@ -1134,6 +1126,16 @@ public class Session {
 
 	public Map<String, AudienceQueue> getAudienceQueues() {
 		return Collections.unmodifiableMap(audienceQueues);
+	}
+
+	public int getTotalAudienceQueueLength() {
+		synchronized (audienceQueues) {
+			int length = 0;
+			for (AudienceQueue q : audienceQueues.values()) {
+				length += q.getLength();
+			}
+			return length;
+		}
 	}
 
 	public Map<String, Realm> getRealms() {

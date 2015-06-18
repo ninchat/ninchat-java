@@ -47,6 +47,11 @@ public abstract class SessionListener {
 	public void onAudienceQueueUpdated(Session session, AudienceQueue audienceQueue) { }
 
 	/**
+	 * Called when the length of the queue changes. QueueUpdated callback is also notified.
+	 */
+	public void onAudienceQueueLengthChanged(Session session, AudienceQueue audienceQueue, int difference) { }
+
+	/**
 	 * After session has been established, some attributes like realms and dialogue peers have to be loaded before
 	 * they can be shown in user interface. Session does this automatically after it has been established. This
 	 * method is called when loading is complete.

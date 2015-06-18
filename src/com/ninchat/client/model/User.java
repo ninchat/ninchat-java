@@ -79,6 +79,7 @@ public class User {
 		admin = attrs.getAdmin();
 		connected = attrs.getConnected();
 		guest = attrs.getGuest();
+		deleted = attrs.getDeleted();
 
 		idle = attrs.getIdle();
 		if (idle != null) idle *= 1000;
