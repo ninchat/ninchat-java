@@ -1120,12 +1120,64 @@ public class Session {
 		ArrayList<Conversation> conversations = new ArrayList<Conversation>();
 		conversations.addAll(channels.values());
 		conversations.addAll(dialogues.values());
-		Collections.sort(conversations, new ChatComparator());
+		Collections.sort(conversations, new Comparator<Conversation>() {
+			@Override
+			public int compare(Conversation a, Conversation b) {
+				if (a instanceof Dialogue && b instanceof Dialogue) {
+					return a.getName().compareToIgnoreCase(b.getName());
+
+				} else if (a instanceof Channel && b instanceof Channel) {
+					Channel ac = (Channel) a;
+					Channel bc = (Channel) b;
+
+					if (ac.getRealm() == bc.getRealm()) {
+						return ac.getName().compareToIgnoreCase(bc.getName());
+
+					} else if (ac.getRealm() == null) {
+						return -1;
+
+					} else if (bc.getRealm() == null) {
+						return 1;
+
+					} else {
+						return ac.getRealm().getName().compareToIgnoreCase(bc.getRealm().getName());
+					}
+
+				} else if (a instanceof Channel) {
+					return -1;
+
+				} else {
+					assert b instanceof Channel;
+					return 1;
+				}
+			}
+		});
+
 		return Collections.unmodifiableList(conversations);
 	}
 
-	public Map<String, AudienceQueue> getAudienceQueues() {
-		return Collections.unmodifiableMap(audienceQueues);
+	public List<AudienceQueue> getAudienceQueues() {
+		ArrayList<AudienceQueue> sortedAudienceQueues = new ArrayList<AudienceQueue>(audienceQueues.values());
+
+		Collections.sort(sortedAudienceQueues, new Comparator<AudienceQueue>() {
+			@Override
+			public int compare(AudienceQueue ac, AudienceQueue bc) {
+				if (ac.getRealm() == bc.getRealm()) {
+					return ac.getName().compareToIgnoreCase(bc.getName());
+
+				} else if (ac.getRealm() == null) {
+					return -1;
+
+				} else if (bc.getRealm() == null) {
+					return 1;
+
+				} else {
+					return ac.getRealm().getName().compareToIgnoreCase(bc.getRealm().getName());
+				}
+			}
+		});
+
+		return Collections.unmodifiableList(sortedAudienceQueues);
 	}
 
 	public int getTotalAudienceQueueLength() {
