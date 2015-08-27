@@ -1,0 +1,19 @@
+apply plugin: 'java'
+
+sourceCompatibility = 1.6
+
+sourceSets {
+	main {
+		java {
+			srcDir 'gen'
+		}
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+dependencies {
+	compile 'com.google.code.gson:gson:2.3.1'
+}
