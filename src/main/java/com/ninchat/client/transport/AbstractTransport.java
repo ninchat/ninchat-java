@@ -25,6 +25,7 @@
  */
 package com.ninchat.client.transport;
 
+import com.ninchat.client.transport.actions.CreateSession;
 import com.ninchat.client.transport.actions.Ping;
 import com.ninchat.client.transport.events.Error;
 import com.ninchat.client.transport.events.HistoryResults;
@@ -88,6 +89,7 @@ public abstract class AbstractTransport {
 	protected String host;
 	protected String sessionHost;
 
+	protected boolean initialized;
 
 	/**
 	 * Returns the number of unset actions
@@ -146,12 +148,19 @@ public abstract class AbstractTransport {
 	 * @returns ActionId an unique action id
 	 */
 	public Long enqueue(Action action) {
+		if (!initialized) {
+			init();
+		}
+
 		if (!action.verify()) {
 			throw new IllegalArgumentException("Action validation failed! Probably some mandatory properties are missing: " + action.getActionName());
 		}
 
-		Long ai = actionId.getAndIncrement();
-		action.setId(ai);
+		Long ai = null;
+		if (!(action instanceof CreateSession)) {
+			ai = actionId.getAndIncrement();
+			action.setId(ai);
+		}
 
 		if (shouldAcknowledgeEventId()) {
 			if (lastReceivedEvent != null && lastReceivedEvent.getId() != null) {
@@ -163,6 +172,12 @@ public abstract class AbstractTransport {
 		action.registerTimeoutTask(timeoutTimer);
 
 		synchronized (queue) {
+			/*
+			if (queue.contains(action)) {
+				// Null id is treated as zero in the queue. It is reserved for create_session and similar actions that don't support action_id
+				throw new IllegalStateException("There's already an action with null id in the queue. ");
+			}
+			*/
 			boolean added = queue.add(action);
 			assert added;
 
@@ -171,7 +186,7 @@ public abstract class AbstractTransport {
 
 		logger.fine("Enqueued action: " + action);
 
-		return action.isExpectActionId() ? ai : null;
+		return ai;
 	}
 
 	public void addEventListener(Class<? extends Event> eventClass, TransportEventListener<? extends Event> eventListener) {
@@ -219,7 +234,18 @@ public abstract class AbstractTransport {
 		setStatus(Status.CLOSED);
 
 		synchronized (queue) {
+			for (Action action : queue) {
+				AckListener ackListener = action.getAckListener();
+				if (ackListener != null) {
+					ackListener.onCancel(action);
+				}
+			}
+
 			queue.clear();
+		}
+
+		if (timeoutTimer != null) {
+			timeoutTimer.cancel();
 		}
 
 		lastReceivedEvent = null;
@@ -227,7 +253,7 @@ public abstract class AbstractTransport {
 
 		actionId.set(INITIAL_ACTION_ID);
 
-		init();
+		initialized = false;
 	}
 
 	/**
@@ -238,12 +264,11 @@ public abstract class AbstractTransport {
 			throw new IllegalStateException("Can not initialize an opened or opening transport!");
 		}
 
-		if (timeoutTimer != null) {
-			timeoutTimer.cancel();
-		}
 		timeoutTimer = new Timer();
 
 		rewindQueue();
+
+		initialized = true;
 	}
 
 

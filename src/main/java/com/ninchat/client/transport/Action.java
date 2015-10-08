@@ -35,6 +35,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
+ * This is a base class for actions.
+ *
  * @author Kari Lavikka
  */
 public abstract class Action implements Comparable {
@@ -42,6 +44,9 @@ public abstract class Action implements Comparable {
 
 	transient long sent = Long.MIN_VALUE;
 
+	/**
+	 * Null action id is treated as zero and is reserved for "immediate" actions like create_session.
+	 */
 	@SerializedName("action_id")
 	private Long id;
 
@@ -112,11 +117,9 @@ public abstract class Action implements Comparable {
 	public int compareTo(Object o) {
 		Action bo = (Action)o;
 
-		Long a = id;
-		if (a == null) throw new IllegalStateException("Can not compare: no action id has been set for this action!");
+		Long a = id != null ? id : 0;
 
-		Long b = bo.id;
-		if (b == null) throw new IllegalStateException("Can not compare: no action id has been set for given action!");
+		Long b = bo.id != null ? bo.id : 0;
 
 		return (int)(a - b);
 	}
@@ -125,10 +128,10 @@ public abstract class Action implements Comparable {
 	public boolean equals(Object o) {
 		if (o == null || !(o instanceof Action)) return false;
 
-		long a = getId();
+		long a = getId() != null ? getId() : 0;
 		if (a == Long.MIN_VALUE) return false;
 
-		long b = ((Action)o).getId();
+		long b = ((Action)o).getId() != null ? ((Action)o).getId() : 0;
 		if (b == Long.MIN_VALUE) return false;
 
 		return a == b;

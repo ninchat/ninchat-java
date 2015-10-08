@@ -26,9 +26,7 @@
 
 package com.ninchat.client.transport;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import com.google.gson.stream.JsonReader;
 import com.ninchat.client.transport.actions.CloseSession;
 import com.ninchat.client.transport.actions.ResumeSession;
@@ -159,6 +157,10 @@ public class WebSocketTransport extends AbstractTransport {
 
 	@Override
 	public Long enqueue(Action action) {
+		if (!initialized) {
+			init();
+		}
+
 		QueueHog q = queueHog;
 
 		if (q == null) {
@@ -694,7 +696,7 @@ public class WebSocketTransport extends AbstractTransport {
 									element.getAsJsonObject().addProperty("action", r.getActionName());
 
 									String json = gson.toJson(element);
-									logger.finer("QueueHog: sending resume_session to WebSocket: " + json);
+									logger.fine("QueueHog: sending resume_session to WebSocket: " + json);
 
 									webSocketAdapter.send(json);
 
