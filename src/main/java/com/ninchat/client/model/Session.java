@@ -92,6 +92,7 @@ public class Session {
 		this.transport = transport;
 
 		transport.addEventListener(SessionCreated.class, new SessionCreatedListener());
+		transport.addEventListener(SessionStatusUpdated.class, new SessionStatusUpdatedListener());
 		transport.addEventListener(HistoryResults.class, new HistoryResultsListener());
 		transport.addEventListener(MessageReceived.class, new MessageReceivedListener());
 		transport.addEventListener(ChannelFound.class, new ChannelFoundListener());
@@ -352,7 +353,7 @@ public class Session {
 
 			try {
 				// Take a nap before termination. Give transport some time for transmitting the action
-				Thread.sleep(200);
+				Thread.sleep(1000);
 			} catch (InterruptedException e) {  }
 
 		}
@@ -431,6 +432,43 @@ public class Session {
 			}
 
 			openMessageBundles.put(target, new ArrayList<Message>());
+		}
+	}
+
+	private class SessionStatusUpdatedListener implements TransportEventListener<SessionStatusUpdated> {
+		@Override
+		public void onEvent(SessionStatusUpdated event) {
+
+			String channelId = event.getChannelId();
+			String userId = event.getUserId();
+			Conversation target;
+
+			if (event.getMessageId() == null) {
+				return;
+			}
+
+			if (channelId != null) {
+				Channel channel = channels.get(channelId);
+				if (channel == null) {
+					logger.warning("SessionStatusUpdated for unknown channel " + channelId + ". Ignoring.");
+					return;
+				}
+
+				target = channel;
+
+			} else if (userId != null) {
+				boolean exists = dialogues.containsKey(userId);
+				target = getOrCreateDialogue(userId);
+
+			} else {
+				logger.warning("SessionStatusUpdated has no channelId or userId. Can do nothing with it!");
+				return;
+			}
+
+			String lastSeen = target.getLastSeenMessageId();
+			if (lastSeen == null || lastSeen.compareTo(event.getMessageId()) < 0) {
+				target.setActivityStatus(Conversation.ActivityStatus.NONE);
+			}
 		}
 	}
 
