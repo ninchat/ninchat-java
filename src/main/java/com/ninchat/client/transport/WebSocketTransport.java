@@ -31,6 +31,7 @@ import com.google.gson.stream.JsonReader;
 import com.ninchat.client.transport.actions.CloseSession;
 import com.ninchat.client.transport.actions.ResumeSession;
 import com.ninchat.client.transport.events.MessageReceived;
+import com.ninchat.client.transport.parameters.AudienceMetadata;
 import com.ninchat.client.transport.payloads.MessagePayload;
 
 import java.io.IOException;
@@ -66,7 +67,7 @@ public class WebSocketTransport extends AbstractTransport {
 	private volatile TimeoutMonitor timeoutMonitor;
 	private volatile EventAcknowledger eventAcknowledger;
 
-	private final Gson gson = new Gson();
+	private final Gson gson;
 
 	private String currentHost;
 
@@ -82,6 +83,9 @@ public class WebSocketTransport extends AbstractTransport {
 	private final Object networkAvailabilityHook = new Object();
 
 	public WebSocketTransport() {
+		gson = new GsonBuilder()
+				.registerTypeAdapter(AudienceMetadata.class, new AudienceMetadata.AudienceMetadataTypeAdapter()) // TODO: Replace this dependency with more dynamic solution
+				.create();
 		init();
 	}
 
