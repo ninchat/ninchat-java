@@ -620,8 +620,7 @@ public class Session {
 			if (event.getUserQueues() != null) {
 				for (Map.Entry<String, UserQueues.Parameters> e : event.getUserQueues().entrySet()) {
 					AudienceQueue audienceQueue = getOrCreateAudienceQueue(e.getKey());
-					audienceQueue.setName(e.getValue().getQueueAttrs().getName());
-					audienceQueue.setLength(e.getValue().getQueueAttrs().getLength());
+					audienceQueue.importAttrs(e.getValue().getQueueAttrs());
 					if (e.getValue().getRealmId() != null) {
 						audienceQueue.setRealm(getOrCreateRealm(e.getValue().getRealmId()));
 					}
