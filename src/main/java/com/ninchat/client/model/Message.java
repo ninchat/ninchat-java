@@ -45,6 +45,7 @@ public class Message implements Comparable {
 	protected String userName;
 	protected float ttl;
 	protected boolean fold;
+	protected boolean hidden;
 
 	protected final Payload payload;
 
@@ -63,6 +64,7 @@ public class Message implements Comparable {
 		time = new Date((long)(event.getMessageTime() * 1000));
 		userId = event.getMessageUserId();
 		userName = event.getMessageUserName();
+		hidden = event.getMessageHidden();
 
 		if (event.getPayloadCount() > 0) {
 			payload = event.getPayloads()[0];
@@ -121,6 +123,14 @@ public class Message implements Comparable {
 
 	public void setFold(boolean fold) {
 		this.fold = fold;
+	}
+
+	public boolean isHidden() {
+		return hidden;
+	}
+
+	public void setHidden(boolean hidden) {
+		this.hidden = hidden;
 	}
 
 	@Override

@@ -95,6 +95,7 @@ public class Session {
 		transport.addEventListener(SessionStatusUpdated.class, new SessionStatusUpdatedListener());
 		transport.addEventListener(HistoryResults.class, new HistoryResultsListener());
 		transport.addEventListener(MessageReceived.class, new MessageReceivedListener());
+		transport.addEventListener(MessageUpdated.class, new MessageUpdatedListener());
 		transport.addEventListener(ChannelFound.class, new ChannelFoundListener());
 		transport.addEventListener(RealmFound.class, new RealmFoundListener());
 		transport.addEventListener(UserFound.class, new UserFoundListener());
@@ -538,6 +539,16 @@ public class Session {
 
 					openMessageBundles.remove(target);
 				}
+			}
+		}
+	}
+
+	private class MessageUpdatedListener implements TransportEventListener<MessageUpdated> {
+		@Override
+		public void onEvent(MessageUpdated messageUpdated) {
+			Conversation conversation = findConversation(new Channel.WrappedId(messageUpdated.getChannelId()));
+			if (conversation != null) {
+				conversation.updateMessage(messageUpdated);
 			}
 		}
 	}

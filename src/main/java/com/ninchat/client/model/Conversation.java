@@ -30,6 +30,7 @@ import com.ninchat.client.transport.AckListener;
 import com.ninchat.client.transport.actions.LoadHistory;
 import com.ninchat.client.transport.actions.SendMessage;
 import com.ninchat.client.transport.actions.UpdateSession;
+import com.ninchat.client.transport.events.MessageUpdated;
 import com.ninchat.client.transport.payloads.MessagePayload;
 import com.ninchat.client.transport.payloads.NinchatLinkMessage;
 import com.ninchat.client.transport.payloads.NinchatTextMessage;
@@ -149,6 +150,25 @@ public abstract class Conversation {
 				}
 			}
 		}
+	}
+
+	void updateMessage(MessageUpdated messageUpdated) {
+		// TODO: A consumer in Java 8 style would be more versatile
+		Message message = findMessage(messageUpdated.getMessageId());
+		if (message != null) {
+			message.setHidden(messageUpdated.getMessageHidden());
+
+			for (ConversationListener a : conversationListeners) {
+				a.onMessageUpdated(this, message);
+			}
+		}
+	}
+
+	public Message findMessage(String messageId) {
+		for (Message message : messages.tailSet(new Message(messageId))) {
+			return messageId.equals(message.getId()) ? message : null;
+		}
+		return null;
 	}
 
 	/**

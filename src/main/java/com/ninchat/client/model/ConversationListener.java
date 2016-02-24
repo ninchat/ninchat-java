@@ -34,4 +34,5 @@ import java.util.List;
 public interface ConversationListener {
 	public void onMessage(Conversation conversation, Message message);
 	public void onMessages(Conversation conversation, List<Message> messages);
+	public void onMessageUpdated(Conversation conversation, Message message);
 }
