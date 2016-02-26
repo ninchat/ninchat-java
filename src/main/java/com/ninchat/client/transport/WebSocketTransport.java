@@ -385,7 +385,9 @@ public class WebSocketTransport extends AbstractTransport {
 	protected void onCompleteEvent(Event event) {
 		super.onCompleteEvent(event);
 
-		eventAcknowledger.wakeup();
+		if (eventAcknowledger != null) {
+			eventAcknowledger.wakeup();
+		}
 	}
 
 	private void timeout() {
