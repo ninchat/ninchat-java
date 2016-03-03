@@ -4,7 +4,7 @@ import cStringIO as stringio
 import os
 import sys
 
-sys.path.insert(0, "ninchat-python")
+sys.path.insert(0, os.path.join("..", "ninchat-python"))
 
 import ninchat.api
 
