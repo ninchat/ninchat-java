@@ -35,6 +35,7 @@ import javax.crypto.BadPaddingException;
 import javax.crypto.IllegalBlockSizeException;
 import javax.crypto.NoSuchPaddingException;
 
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import com.ninchat.master.EncryptionKey;
@@ -82,7 +83,7 @@ public class GsonMetadata
 	/**
 	 * Encrypt metadata for use with a request_audience API call.
 	 */
-	public static String secure(EncryptionKey key, Number expire, JsonObject metadata) throws BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException
+	public static String secure(EncryptionKey key, Number expire, JsonElement metadata) throws BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException
 	{
 		JsonObject msg = new JsonObject();
 		msg.addProperty("expire", expire);
@@ -95,7 +96,7 @@ public class GsonMetadata
 	 * Encrypt metadata for use with a request_audience API call, by the
 	 * specified user only.
 	 */
-	public static String secureForUser(EncryptionKey key, Number expire, JsonObject metadata, String userId) throws BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException
+	public static String secureForUser(EncryptionKey key, Number expire, JsonElement metadata, String userId) throws BadPaddingException, IllegalBlockSizeException, InvalidAlgorithmParameterException, InvalidKeyException, NoSuchAlgorithmException, NoSuchPaddingException, UnsupportedEncodingException
 	{
 		JsonObject msg = new JsonObject();
 		msg.addProperty("expire", expire);
