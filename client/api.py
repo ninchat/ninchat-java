@@ -16,6 +16,7 @@ javatypes = {
 	"string":       "String",
 	"string array": "String[]",
 	"time":         "Integer",
+    "object array": "Object[]"
 }
 
 javareserved = {
