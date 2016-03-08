@@ -26,9 +26,8 @@
 
 package com.ninchat.client.model;
 
-import com.ninchat.client.transport.actions.DiscardHistory;
+import com.google.gson.JsonObject;
 import com.ninchat.client.transport.actions.UpdateDialogue;
-import com.ninchat.client.transport.events.DialogueUpdated;
 
 import java.util.SortedSet;
 import java.util.logging.Logger;
@@ -41,8 +40,11 @@ public class Dialogue extends Conversation {
 
 	private User peer;
 
-	/** An optional audience queue which initiated this dialogue */
+	/** An optional audience queue that initiated this dialogue */
 	private AudienceQueue audienceQueue;
+
+	/** An optional metadata */
+	private JsonObject audienceMetadata;
 
 	public Dialogue(Session session, String id) {
 		super(session, id, new WrappedId(id));
@@ -80,6 +82,14 @@ public class Dialogue extends Conversation {
 
 	void setAudienceQueue(AudienceQueue audienceQueue) {
 		this.audienceQueue = audienceQueue;
+	}
+
+	public JsonObject getAudienceMetadata() {
+		return audienceMetadata;
+	}
+
+	public void setAudienceMetadata(JsonObject audienceMetadata) {
+		this.audienceMetadata = audienceMetadata;
 	}
 
 	@Override

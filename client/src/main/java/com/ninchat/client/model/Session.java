@@ -906,6 +906,8 @@ public class Session {
 					}
 				}
 
+				dialogue.setAudienceMetadata(event.getAudienceMetadata().getJsonObject());
+
 				if (!dialogue.getPeer().isLoaded()) {
 					logger.fine("Unknown dialogue peer. Let's describe!");
 					describeUser(dialogue.getPeer().userId, null);
