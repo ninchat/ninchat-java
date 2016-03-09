@@ -625,6 +625,10 @@ public class Session {
 						dialogue.setActivityStatus(Conversation.ActivityStatus.UNREAD);
 						dialogue.loadHistory(null);
 					}
+
+					if (parameters.getAudienceMetadata() != null) {
+						dialogue.setAudienceMetadata(parameters.getAudienceMetadata().getJsonObject());
+					}
 				}
 			}
 
