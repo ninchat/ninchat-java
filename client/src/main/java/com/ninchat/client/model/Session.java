@@ -828,7 +828,7 @@ public class Session {
 				channels.remove(event.getChannelId());
 
 				for (SessionListener sessionListener : sessionListeners) {
-					sessionListener.onChannelCreated(Session.this, channel);
+					sessionListener.onChannelDestroyed(Session.this, channel);
 				}
 
 			} else {
