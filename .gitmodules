@@ -1,3 +1,6 @@
 [submodule "ninchat-python"]
 	path = ninchat-python
 	url = https://github.com/ninchat/ninchat-python.git
+[submodule "examples/weberknecht"]
+	path = examples/weberknecht
+	url = https://github.com/somia/weberknecht.git

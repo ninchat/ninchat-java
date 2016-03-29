@@ -8,8 +8,8 @@ repositories {
 
 dependencies {
 	compile 'com.google.code.gson:gson:2.3.1'
-    compile project(":ninchat-java/client")
-    compile project(":weberknecht")
+	compile project(":client")
+	compile project(":examples/weberknecht")
 }
 
 mainClassName = "com.ninchat.swingclient.SwingClient"

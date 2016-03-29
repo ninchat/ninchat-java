@@ -1,0 +1,3 @@
+include "client"
+include "examples/ninchat-swing-client"
+include "examples/weberknecht"
