@@ -2,6 +2,10 @@ apply plugin: 'java'
 
 sourceCompatibility = 1.6
 
+exec {
+	commandLine "./api.py"
+}
+
 sourceSets {
 	main {
 		java {
