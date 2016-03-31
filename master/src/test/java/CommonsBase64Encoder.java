@@ -24,13 +24,14 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.ninchat.master;
+import org.apache.commons.codec.binary.Base64;
 
-/**
- * @see EncryptionKey
- * @see SigningKey
- */
-public interface Base64Encoder
+import com.ninchat.master.Base64Encoder;
+
+class CommonsBase64Encoder implements Base64Encoder
 {
-	String encode(byte[] data);
+	public String encode(byte[] data)
+	{
+		return Base64.encodeBase64String(data);
+	}
 }

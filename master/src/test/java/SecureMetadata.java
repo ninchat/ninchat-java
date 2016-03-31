@@ -33,9 +33,6 @@ import com.ninchat.master.gson.GsonMetadata;
 
 class SecureMetadata
 {
-	static final String KEY_ID = "3j62l00g00ri4";
-	static final String KEY_SECRET = "nBtjEt5iQPW80kvdN9vZl6fqYKb+fSSmCpSgbffYAZM=";
-
 	static void test(EncryptionKey e) throws Exception
 	{
 		double expire = System.currentTimeMillis() / 1000.0 + 60;
@@ -56,14 +53,7 @@ class SecureMetadata
 		metadata.add("baz", baz);
 		metadata.add("quux", quux);
 
-		dump(GsonMetadata.secure(e, expire, metadata));
-		dump(GsonMetadata.secureForUser(e, expire, metadata, userId));
-	}
-
-	static void dump(String s)
-	{
-		System.out.println("");
-		System.out.println("Size: " + Integer.toString(s.length()));
-		System.out.println("Data: " + s);
+		Testing.dump(GsonMetadata.secure(e, expire, metadata));
+		Testing.dump(GsonMetadata.secureForUser(e, expire, metadata, userId));
 	}
 }

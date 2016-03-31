@@ -27,10 +27,9 @@
 package com.ninchat.master;
 
 /**
- * @see EncryptionKey
  * @see SigningKey
  */
-public interface Base64Encoder
+public interface SignatureMessage
 {
-	String encode(byte[] data);
+	byte[] encode(long expire, String nonce);
 }

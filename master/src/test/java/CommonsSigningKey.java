@@ -24,13 +24,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.ninchat.master;
+import org.apache.commons.codec.binary.Base64;
 
-/**
- * @see EncryptionKey
- * @see SigningKey
- */
-public interface Base64Encoder
+import org.junit.Test;
+
+import com.ninchat.master.SigningKey;
+
+public class CommonsSigningKey
 {
-	String encode(byte[] data);
+	@Test
+	public void test() throws Exception
+	{
+		ActionSignatures.test(new SigningKey(
+			Testing.KEY_ID,
+			Base64.decodeBase64(Testing.KEY_SECRET),
+			new CommonsBase64Encoder()
+		));
+	}
 }

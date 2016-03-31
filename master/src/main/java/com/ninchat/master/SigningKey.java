@@ -26,11 +26,51 @@
 
 package com.ninchat.master;
 
-/**
- * @see EncryptionKey
- * @see SigningKey
- */
-public interface Base64Encoder
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+public class SigningKey
 {
-	String encode(byte[] data);
+	private static final String ALGORITHM = "HmacSHA512";
+	private static final int NONCE_SIZE = 6;
+
+	private final String prefix;
+	private final SecretKeySpec keySpec;
+	private final Base64Encoder encoder;
+	private final SecureRandom random;
+
+	public SigningKey(String masterKeyId, byte[] masterKeySecretData, Base64Encoder encoder)
+	{
+		this(masterKeyId, masterKeySecretData, encoder, new SecureRandom());
+	}
+
+	public SigningKey(String masterKeyId, byte[] masterKeySecretData, Base64Encoder encoder, SecureRandom random)
+	{
+		prefix = masterKeyId + "-";
+		keySpec = new SecretKeySpec(masterKeySecretData, ALGORITHM);
+		this.encoder = encoder;
+		this.random = random;
+	}
+
+	public String makeNonce()
+	{
+		byte[] data = new byte[NONCE_SIZE];
+		random.nextBytes(data);
+
+		return encoder.encode(data);
+	}
+
+	public String sign(long expire, String nonce, byte[] msg) throws InvalidKeyException, NoSuchAlgorithmException
+	{
+		Mac hmac = Mac.getInstance(ALGORITHM);
+		hmac.init(keySpec);
+		byte[] digest = hmac.doFinal(msg);
+		String digestBase64 = encoder.encode(digest);
+
+		return prefix + Long.toString(expire) + "-" + nonce + "-" + digestBase64;
+	}
 }

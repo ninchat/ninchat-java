@@ -36,8 +36,8 @@ public class Java8EncryptionKey
 	public void test() throws Exception
 	{
 		SecureMetadata.test(new EncryptionKey(
-			SecureMetadata.KEY_ID,
-			Base64.getDecoder().decode(SecureMetadata.KEY_SECRET),
+			Testing.KEY_ID,
+			Base64.getDecoder().decode(Testing.KEY_SECRET),
 			(byte[] data) -> Base64.getEncoder().encodeToString(data)
 		));
 	}

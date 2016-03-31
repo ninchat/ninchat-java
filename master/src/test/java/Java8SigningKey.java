@@ -24,13 +24,21 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.ninchat.master;
+import java.util.Base64;
 
-/**
- * @see EncryptionKey
- * @see SigningKey
- */
-public interface Base64Encoder
+import org.junit.Test;
+
+import com.ninchat.master.SigningKey;
+
+public class Java8SigningKey
 {
-	String encode(byte[] data);
+	@Test
+	public void test() throws Exception
+	{
+		ActionSignatures.test(new SigningKey(
+			Testing.KEY_ID,
+			Base64.getDecoder().decode(Testing.KEY_SECRET),
+			(byte[] data) -> Base64.getEncoder().encodeToString(data)
+		));
+	}
 }

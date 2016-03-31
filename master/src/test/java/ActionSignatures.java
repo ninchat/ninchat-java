@@ -24,13 +24,33 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.ninchat.master;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonPrimitive;
 
-/**
- * @see EncryptionKey
- * @see SigningKey
- */
-public interface Base64Encoder
+import com.ninchat.master.SigningKey;
+import com.ninchat.master.gson.GsonActionSigning;
+
+class ActionSignatures
 {
-	String encode(byte[] data);
+	static void test(SigningKey key) throws Exception
+	{
+		long expire = System.currentTimeMillis() / 1000 + 60;
+		String userId = "3j63en1k00ri4";
+		String channelId = "1bfbr0u";
+
+		JsonArray attr = new JsonArray();
+		attr.add(new JsonPrimitive("silenced"));
+		attr.add(new JsonPrimitive(false));
+
+		JsonArray memberAttrs = new JsonArray();
+		memberAttrs.add(attr);
+
+		Testing.dump(GsonActionSigning.signCreateSession(key, expire));
+		Testing.dump(GsonActionSigning.signCreateSessionForUser(key, expire, userId));
+
+		Testing.dump(GsonActionSigning.signJoinChannel(key, expire, channelId));
+		Testing.dump(GsonActionSigning.signJoinChannel(key, expire, channelId, memberAttrs));
+		Testing.dump(GsonActionSigning.signJoinChannelForUser(key, expire, channelId, userId));
+		Testing.dump(GsonActionSigning.signJoinChannelForUser(key, expire, channelId, userId, memberAttrs));
+	}
 }

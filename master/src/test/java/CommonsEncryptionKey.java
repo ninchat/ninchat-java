@@ -28,7 +28,6 @@ import org.apache.commons.codec.binary.Base64;
 
 import org.junit.Test;
 
-import com.ninchat.master.Base64Encoder;
 import com.ninchat.master.EncryptionKey;
 
 public class CommonsEncryptionKey
@@ -37,14 +36,9 @@ public class CommonsEncryptionKey
 	public void test() throws Exception
 	{
 		SecureMetadata.test(new EncryptionKey(
-			SecureMetadata.KEY_ID,
-			Base64.decodeBase64(SecureMetadata.KEY_SECRET),
-			new Base64Encoder() {
-				public String encode(byte[] data)
-				{
-					return Base64.encodeBase64String(data);
-				}
-			}
+			Testing.KEY_ID,
+			Base64.decodeBase64(Testing.KEY_SECRET),
+			new CommonsBase64Encoder()
 		));
 	}
 }

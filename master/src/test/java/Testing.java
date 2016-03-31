@@ -24,13 +24,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-package com.ninchat.master;
-
-/**
- * @see EncryptionKey
- * @see SigningKey
- */
-public interface Base64Encoder
+class Testing
 {
-	String encode(byte[] data);
+	static final String KEY_ID = "3j62l00g00ri4";
+	static final String KEY_SECRET = "nBtjEt5iQPW80kvdN9vZl6fqYKb+fSSmCpSgbffYAZM=";
+
+	static void dump(String s)
+	{
+		System.out.println("");
+		System.out.println("Size: " + Integer.toString(s.length()));
+		System.out.println("Data: " + s);
+	}
 }
