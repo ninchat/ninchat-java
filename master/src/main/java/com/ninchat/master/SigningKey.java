@@ -33,6 +33,18 @@ import java.security.SecureRandom;
 import javax.crypto.Mac;
 import javax.crypto.spec.SecretKeySpec;
 
+/**
+ * Holds a Ninchat master key, and knows how to create HMAC signatures for use
+ * with Ninchat API actions.
+ *
+ * The master key id and secret may be obtained with the create_master_key
+ * Ninchat API action.
+ *
+ * The masterKeySecretData passed to the constructor is binary data; it must
+ * have been base64-decoded beforehand.
+ *
+ * @see com.ninchat.master.gson.GsonActionSigning
+ */
 public class SigningKey
 {
 	private static final String ALGORITHM = "HmacSHA512";
@@ -56,6 +68,12 @@ public class SigningKey
 		this.random = random;
 	}
 
+	/**
+	 * This is a low-level utility.  Use only when implementing an alternative
+	 * for GsonActionSigning.
+	 *
+	 * @return a random token to be used as part of the signed JSON message.
+	 */
 	public String makeNonce()
 	{
 		byte[] data = new byte[NONCE_SIZE];
@@ -64,6 +82,17 @@ public class SigningKey
 		return encoder.encode(data);
 	}
 
+	/**
+	 * This is a low-level interface.  Use only when implementing an
+	 * alternative for GsonActionSigning.
+	 *
+	 * @param expire is seconds since 1970-01-01 UTC.
+	 * @param nonce was created with makeNonce().
+	 * @param msg is JSON-encoded text.
+	 *
+	 * @return a value suitable to be passed to the Ninchat API as the
+	 *         master_sign parameter.
+	 */
 	public String sign(long expire, String nonce, byte[] msg) throws InvalidKeyException, NoSuchAlgorithmException
 	{
 		Mac hmac = Mac.getInstance(ALGORITHM);
