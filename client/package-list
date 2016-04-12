@@ -1,0 +1,7 @@
+com.ninchat.client.model
+com.ninchat.client.transport
+com.ninchat.client.transport.actions
+com.ninchat.client.transport.attributes
+com.ninchat.client.transport.events
+com.ninchat.client.transport.parameters
+com.ninchat.client.transport.payloads
