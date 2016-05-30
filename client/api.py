@@ -38,13 +38,14 @@ eventbases = {
 }
 
 attrclasses = {
-	"UserAttrs":           ninchat.api.attrs.user,
-	"IdentityAttrs":       ninchat.api.attrs.identity,
-	"DialogueMemberAttrs": ninchat.api.attrs.dialoguemember,
 	"ChannelAttrs":        ninchat.api.attrs.channel,
 	"ChannelMemberAttrs":  ninchat.api.attrs.channelmember,
+	"DialogueMemberAttrs": ninchat.api.attrs.dialoguemember,
+	"IdentityAttrs":       ninchat.api.attrs.identity,
 	"RealmAttrs":          ninchat.api.attrs.realm,
 	"RealmMemberAttrs":    ninchat.api.attrs.realmmember,
+	"TagAttrs":            ninchat.api.attrs.tag,
+	"UserAttrs":           ninchat.api.attrs.user,
 }
 
 class Output(object):
