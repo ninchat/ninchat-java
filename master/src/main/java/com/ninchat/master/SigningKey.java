@@ -48,7 +48,7 @@ import javax.crypto.spec.SecretKeySpec;
 public class SigningKey
 {
 	private static final String ALGORITHM = "HmacSHA512";
-	private static final int NONCE_SIZE = 6;
+	private static final int NONCE_SIZE = 6; // Doesn't cause ='s at the end
 
 	private final String prefix;
 	private final SecretKeySpec keySpec;
@@ -62,7 +62,7 @@ public class SigningKey
 
 	public SigningKey(String masterKeyId, byte[] masterKeySecretData, Base64Encoder encoder, SecureRandom random)
 	{
-		prefix = masterKeyId + "-";
+		prefix = masterKeyId + ".";
 		keySpec = new SecretKeySpec(masterKeySecretData, ALGORITHM);
 		this.encoder = encoder;
 		this.random = random;
@@ -79,7 +79,7 @@ public class SigningKey
 		byte[] data = new byte[NONCE_SIZE];
 		random.nextBytes(data);
 
-		return encoder.encode(data);
+		return encoder.encode(data).replace('+', '-').replace('/', '_');
 	}
 
 	/**
@@ -89,17 +89,18 @@ public class SigningKey
 	 * @param expire is seconds since 1970-01-01 UTC.
 	 * @param nonce was created with makeNonce().
 	 * @param msg is JSON-encoded text.
+	 * @param flags is "" or "1".
 	 *
 	 * @return a value suitable to be passed to the Ninchat API as the
 	 *         master_sign parameter.
 	 */
-	public String sign(long expire, String nonce, byte[] msg) throws InvalidKeyException, NoSuchAlgorithmException
+	public String sign(long expire, String nonce, byte[] msg, String flags) throws InvalidKeyException, NoSuchAlgorithmException
 	{
 		Mac hmac = Mac.getInstance(ALGORITHM);
 		hmac.init(keySpec);
 		byte[] digest = hmac.doFinal(msg);
 		String digestBase64 = encoder.encode(digest);
 
-		return prefix + Long.toString(expire) + "-" + nonce + "-" + digestBase64;
+		return prefix + Long.toString(expire) + "." + nonce + "." + digestBase64 + "." + flags;
 	}
 }

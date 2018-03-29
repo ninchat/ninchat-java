@@ -105,7 +105,7 @@ public class GsonActionSigning
 		if (userId != null)
 			addEntry(msg, "user_id", new JsonPrimitive(userId));
 
-		return key.sign(expire, nonce, msg.toString().getBytes("UTF-8"));
+		return key.sign(expire, nonce, msg.toString().getBytes("UTF-8"), "");
 	}
 
 	/**
@@ -132,7 +132,7 @@ public class GsonActionSigning
 	 */
 	public static String signJoinChannel(SigningKey key, long expire, String channelId, JsonElement memberAttrs) throws InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException
 	{
-		return doSignJoinChannel(key, expire, channelId, null, memberAttrs);
+		return doSignJoinChannel(key, expire, channelId, null, memberAttrs, "");
 	}
 
 	/**
@@ -164,10 +164,10 @@ public class GsonActionSigning
 	 */
 	public static String signJoinChannelForUser(SigningKey key, long expire, String channelId, String userId, JsonElement memberAttrs) throws InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException
 	{
-		return doSignJoinChannel(key, expire, channelId, userId, memberAttrs) + "-1";
+		return doSignJoinChannel(key, expire, channelId, userId, memberAttrs, "1");
 	}
 
-	private static final String doSignJoinChannel(SigningKey key, long expire, String channelId, String userId, JsonElement memberAttrs) throws InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException
+	private static final String doSignJoinChannel(SigningKey key, long expire, String channelId, String userId, JsonElement memberAttrs, String flags) throws InvalidKeyException, NoSuchAlgorithmException, UnsupportedEncodingException
 	{
 		String nonce = key.makeNonce();
 
@@ -184,7 +184,7 @@ public class GsonActionSigning
 		if (userId != null)
 			addEntry(msg, "user_id", new JsonPrimitive(userId));
 
-		return key.sign(expire, nonce, msg.toString().getBytes("UTF-8"));
+		return key.sign(expire, nonce, msg.toString().getBytes("UTF-8"), flags);
 	}
 
 	private static final void addEntry(JsonArray msg, String key, JsonElement value)

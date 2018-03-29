@@ -69,7 +69,7 @@ public class EncryptionKey
 
 	public EncryptionKey(String masterKeyId, byte[] masterKeySecretData, Base64Encoder encoder, SecureRandom random)
 	{
-		prefix = masterKeyId + "-";
+		prefix = masterKeyId + ".";
 		keySpec = new SecretKeySpec(masterKeySecretData, "AES");
 		this.encoder = encoder;
 		this.random = random;
@@ -106,6 +106,6 @@ public class EncryptionKey
 		byte[] ivEncrypted = Arrays.copyOf(iv, ivEncryptedLen);
 		System.arraycopy(encrypted, 0, ivEncrypted, iv.length, encrypted.length);
 
-		return prefix + encoder.encode(ivEncrypted);
+		return prefix + encoder.encode(ivEncrypted).replace('+', '-').replace('/', '_').replaceAll("=*$", "");
 	}
 }
